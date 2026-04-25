@@ -1,0 +1,71 @@
+<div class="page-content">
+
+  <!-- Welcome banner -->
+  <div class="welcome-banner">
+    <div class="welcome-text">
+      <h2>Bienvenue, {{ login }} 👋</h2>
+      <p>Centre de Formation Excellent Training — {{ auth.getRole() }}</p>
+    </div>
+    <div class="welcome-icon"><mat-icon>insights</mat-icon></div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <mat-card class="stat-card" (click)="navigate('formations')" style="cursor:pointer">
+      <mat-icon style="color:#00b4d8">menu_book</mat-icon>
+      <h2>{{ totalFormations }}</h2>
+      <p>Formations</p>
+    </mat-card>
+    <mat-card class="stat-card" (click)="navigate('participants')" style="cursor:pointer">
+      <mat-icon style="color:#ffd60a">groups</mat-icon>
+      <h2>{{ totalParticipants }}</h2>
+      <p>Participants</p>
+    </mat-card>
+    <mat-card class="stat-card" (click)="navigate('formateurs')" style="cursor:pointer">
+      <mat-icon style="color:#00e676">person_pin</mat-icon>
+      <h2>{{ totalFormateurs }}</h2>
+      <p>Formateurs</p>
+    </mat-card>
+    <mat-card class="stat-card" (click)="navigate('domaines')" style="cursor:pointer">
+      <mat-icon style="color:#7c4dff">category</mat-icon>
+      <h2>{{ totalDomaines }}</h2>
+      <p>Domaines</p>
+    </mat-card>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="charts-grid">
+    <mat-card class="chart-card">
+      <mat-card-title><mat-icon>bar_chart</mat-icon> Formations par Domaine</mat-card-title>
+      <mat-card-content style="margin-top:16px">
+        <canvas baseChart [data]="domaineChartData" [options]="chartOptions" type="bar" style="max-height:260px"></canvas>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-title><mat-icon>show_chart</mat-icon> Évolution par Année</mat-card-title>
+      <mat-card-content style="margin-top:16px">
+        <canvas baseChart [data]="anneeChartData" [options]="chartOptions" type="line" style="max-height:260px"></canvas>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card">
+      <mat-card-title><mat-icon>pie_chart</mat-icon> Budget par Domaine (DT)</mat-card-title>
+      <mat-card-content style="margin-top:16px">
+        <canvas baseChart [data]="budgetChartData" [options]="chartOptions" type="doughnut" style="max-height:260px"></canvas>
+      </mat-card-content>
+    </mat-card>
+
+    <mat-card class="chart-card" style="display:flex;flex-direction:column">
+      <mat-card-title><mat-icon>summarize</mat-icon> Résumé</mat-card-title>
+      <mat-card-content style="margin-top:16px;flex:1">
+        <div *ngFor="let item of summaryItems"
+             style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">
+          <span style="color:#8899aa;font-size:.88rem">{{ item.label }}</span>
+          <span style="color:#00e5ff;font-weight:700;font-family:'Josefin Sans',sans-serif">{{ item.value }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+</div>

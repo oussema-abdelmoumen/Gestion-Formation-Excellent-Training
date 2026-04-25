@@ -1,0 +1,87 @@
+<mat-toolbar class="navbar">
+  <span class="brand" [routerLink]="authService.isUtilisateur() ? '/app/formations' : '/app/dashboard'">
+    <mat-icon>school</mat-icon>
+    Excellent <span>Training</span>
+  </span>
+  <span class="spacer"></span>
+
+  <!-- RESPONSABLE + ADMIN: dashboard -->
+  <button mat-button class="nav-btn" routerLink="/app/dashboard" routerLinkActive="active-link"
+          *ngIf="!authService.isUtilisateur()">
+    <mat-icon>dashboard</mat-icon> Dashboard
+  </button>
+
+  <!-- UTILISATEUR: formations + formateurs + participants -->
+  <ng-container *ngIf="authService.isUtilisateur()">
+    <button mat-button class="nav-btn" routerLink="/app/formations" routerLinkActive="active-link">
+      <mat-icon>menu_book</mat-icon> Mes Formations
+    </button>
+    <button mat-button class="nav-btn" routerLink="/app/formateurs" routerLinkActive="active-link">
+      <mat-icon>person_pin</mat-icon> Formateurs
+    </button>
+    <button mat-button class="nav-btn" routerLink="/app/participants" routerLinkActive="active-link">
+      <mat-icon>groups</mat-icon> Participants
+    </button>
+  </ng-container>
+
+  <!-- RESPONSABLE: formations + formateurs + participants + domaines (lecture) -->
+  <ng-container *ngIf="authService.isResponsable()">
+    <button mat-button class="nav-btn" routerLink="/app/formations" routerLinkActive="active-link">
+      <mat-icon>menu_book</mat-icon> Formations
+    </button>
+    <button mat-button class="nav-btn" routerLink="/app/formateurs" routerLinkActive="active-link">
+      <mat-icon>person_pin</mat-icon> Formateurs
+    </button>
+    <button mat-button class="nav-btn" routerLink="/app/participants" routerLinkActive="active-link">
+      <mat-icon>groups</mat-icon> Participants
+    </button>
+    <button mat-button class="nav-btn" routerLink="/app/domaines" routerLinkActive="active-link">
+      <mat-icon>category</mat-icon> Domaines
+    </button>
+  </ng-container>
+
+  <!-- ADMIN: tout -->
+  <ng-container *ngIf="authService.isAdmin()">
+    <button mat-button class="nav-btn" routerLink="/app/formations" routerLinkActive="active-link">
+      <mat-icon>menu_book</mat-icon> Formations
+    </button>
+    <button mat-button class="nav-btn" routerLink="/app/participants" routerLinkActive="active-link">
+      <mat-icon>groups</mat-icon> Participants
+    </button>
+    <button mat-button class="nav-btn" routerLink="/app/formateurs" routerLinkActive="active-link">
+      <mat-icon>person_pin</mat-icon> Formateurs
+    </button>
+    <button mat-button class="nav-btn admin-btn" [matMenuTriggerFor]="adminMenu">
+      <mat-icon>admin_panel_settings</mat-icon> Admin
+      <mat-icon style="font-size:16px;margin-left:2px">arrow_drop_down</mat-icon>
+    </button>
+    <mat-menu #adminMenu="matMenu">
+      <button mat-menu-item routerLink="/app/domaines"><mat-icon>category</mat-icon> Domaines</button>
+      <button mat-menu-item routerLink="/app/profils"><mat-icon>badge</mat-icon> Profils</button>
+      <button mat-menu-item routerLink="/app/structures"><mat-icon>account_tree</mat-icon> Structures</button>
+      <button mat-menu-item routerLink="/app/employeurs"><mat-icon>business</mat-icon> Employeurs</button>
+      <button mat-menu-item routerLink="/app/utilisateurs"><mat-icon>manage_accounts</mat-icon> Utilisateurs</button>
+    </mat-menu>
+  </ng-container>
+
+  <div style="width:12px"></div>
+  <button class="theme-btn" (click)="theme.toggle()" [matTooltip]="theme.isLight()?'Mode sombre':'Mode clair'">
+    <mat-icon>{{ theme.isLight() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+  </button>
+  <div style="width:10px"></div>
+
+  <div class="user-chip">
+    <mat-icon>account_circle</mat-icon>
+    <div>
+      <div class="login">{{ authService.getLogin() }}</div>
+      <div class="role"
+           [style.color]="authService.isAdmin() ? '#ff4444' : authService.isResponsable() ? '#ffd60a' : '#00e676'">
+        {{ authService.getRole() }}
+      </div>
+    </div>
+  </div>
+
+  <button mat-icon-button class="logout-btn" (click)="logout()" matTooltip="Déconnexion" style="margin-left:8px">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>

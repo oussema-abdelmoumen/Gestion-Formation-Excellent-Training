@@ -1,0 +1,51 @@
+<div class="login-container">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <button class="back-btn" routerLink="/">
+    <mat-icon>arrow_back</mat-icon> Accueil
+  </button>
+
+  <mat-card class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon"><mat-icon>school</mat-icon></div>
+      <h1>Connexion</h1>
+      <p>Accédez à votre espace de gestion</p>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <div class="login-body">
+      <mat-form-field appearance="outline" class="full-width" style="margin-top:20px">
+        <mat-label>Identifiant</mat-label>
+        <input matInput [(ngModel)]="login" name="login" required (keyup.enter)="onLogin()">
+        <mat-icon matSuffix style="color:#8899aa">person</mat-icon>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Mot de passe</mat-label>
+        <input matInput [type]="hidePassword ? 'password' : 'text'"
+               [(ngModel)]="password" name="password" required (keyup.enter)="onLogin()">
+        <button mat-icon-button matSuffix type="button" (click)="hidePassword = !hidePassword">
+          <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <div *ngIf="errorMessage" class="error-msg">
+        <mat-icon>error_outline</mat-icon> {{ errorMessage }}
+      </div>
+
+      <button mat-raised-button color="primary" class="login-btn"
+              (click)="onLogin()" [disabled]="loading">
+        <mat-spinner *ngIf="loading" diameter="20" style="display:inline-block;margin-right:8px"></mat-spinner>
+        {{ loading ? 'Connexion en cours...' : 'SE CONNECTER' }}
+      </button>
+
+      <div class="register-link">
+        Pas encore de compte ?
+        <a routerLink="/register">S'inscrire</a>
+      </div>
+    </div>
+  </mat-card>
+</div>

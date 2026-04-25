@@ -1,0 +1,54 @@
+# ============================================================
+#  .gitignore — Gestion de Formation (Spring Boot + Angular)
+# ============================================================
+
+# ── Java / Maven ────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# ── Spring Boot ─────────────────────────────────────────────
+*.log
+logs/
+application-local.properties
+
+# ── IDE ─────────────────────────────────────────────────────
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/settings.json
+.vscode/*.code-workspace
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Angular / Node.js ───────────────────────────────────────
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+frontend/.env
+
+# ── OS ──────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Sensible — NE JAMAIS commiter ───────────────────────────
+*.env
+*.key
+*.pem
+*.p12
+*.jks
+application-prod.properties
+application-secret.properties

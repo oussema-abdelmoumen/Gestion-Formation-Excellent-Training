@@ -1,0 +1,4 @@
+.vfield{margin-bottom:0;}
+.vfield.verr .mdc-notched-outline__leading,.vfield.verr .mdc-notched-outline__notch,.vfield.verr .mdc-notched-outline__trailing{border-color:#ff4444!important;}
+.verr-msg{display:flex;align-items:center;gap:5px;color:#ff6666;font-size:.75rem;margin:-10px 0 6px;padding:0 4px;}
+.verr-msg mat-icon{font-size:14px;height:14px;width:14px;}

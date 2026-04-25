@@ -1,0 +1,125 @@
+<div class="register-container">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
+  <button class="back-btn" (click)="goToLogin()">
+    <mat-icon>arrow_back</mat-icon> Connexion
+  </button>
+
+  <!-- SUCCESS -->
+  <div *ngIf="successMsg" class="success-card">
+    <div class="success-icon"><mat-icon>mark_email_read</mat-icon></div>
+    <h2>Email envoyé !</h2>
+    <p>{{ successMsg }}</p>
+    <p class="success-hint">Vérifiez votre boîte de réception (et les spams).</p>
+    <button mat-raised-button color="primary" class="full-btn" (click)="goToLogin()">
+      <mat-icon>login</mat-icon> Aller à la connexion
+    </button>
+  </div>
+
+  <!-- FORM -->
+  <mat-card class="register-card" *ngIf="!successMsg">
+    <div class="register-logo">
+      <div class="logo-icon"><mat-icon>person_add</mat-icon></div>
+      <h1>Créer un compte</h1>
+      <p>Inscription — Excellent Training</p>
+    </div>
+    <mat-divider></mat-divider>
+
+    <div class="register-body">
+
+      <!-- Login -->
+      <div class="field-wrap" [class.has-error]="errors.login">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Identifiant (login) *</mat-label>
+          <input matInput [(ngModel)]="form.login" (blur)="validateField('login')" maxlength="50" required>
+          <mat-icon matSuffix style="color:#8899aa">person</mat-icon>
+          <mat-hint>3-50 car., lettres/chiffres/_-.</mat-hint>
+        </mat-form-field>
+        <div class="field-error" *ngIf="errors.login">
+          <mat-icon>error_outline</mat-icon> {{ errors.login }}
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="field-wrap" [class.has-error]="errors.email">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email *</mat-label>
+          <input matInput [(ngModel)]="form.email" (blur)="validateField('email')" type="email" maxlength="150" required>
+          <mat-icon matSuffix style="color:#8899aa">email</mat-icon>
+          <mat-hint>Doit contenir &#64; et un point</mat-hint>
+        </mat-form-field>
+        <div class="field-error" *ngIf="errors.email">
+          <mat-icon>error_outline</mat-icon> {{ errors.email }}
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="field-wrap" [class.has-error]="errors.password">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Mot de passe *</mat-label>
+          <input matInput [type]="hidePassword ? 'password' : 'text'"
+                 [(ngModel)]="form.password" (input)="checkPasswordStrength()" maxlength="100" required>
+          <button mat-icon-button matSuffix type="button" (click)="hidePassword=!hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </mat-form-field>
+        <div class="strength-wrap" *ngIf="form.password">
+          <div class="strength-bar">
+            <div class="strength-fill" [style.width.%]="strength * 20" [style.background]="strengthColor"></div>
+          </div>
+          <span class="strength-label" [style.color]="strengthColor">{{ strengthLabel }}</span>
+        </div>
+        <div class="password-rules">
+          <span [class.ok]="hasMinLength()">✓ 8 car. min</span>
+          <span [class.ok]="hasUppercase()">✓ Majuscule</span>
+          <span [class.ok]="hasDigit()">✓ Chiffre</span>
+          <span [class.ok]="hasSpecial()">✓ Spécial</span>
+        </div>
+        <div class="field-error" *ngIf="errors.password">
+          <mat-icon>error_outline</mat-icon> {{ errors.password }}
+        </div>
+      </div>
+
+      <!-- Confirm password -->
+      <div class="field-wrap" [class.has-error]="errors.confirmPassword">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Confirmer le mot de passe *</mat-label>
+          <input matInput [type]="hideConfirm ? 'password' : 'text'"
+                 [(ngModel)]="form.confirmPassword" (blur)="validateField('confirmPassword')" maxlength="100" required>
+          <button mat-icon-button matSuffix type="button" (click)="hideConfirm=!hideConfirm">
+            <mat-icon>{{ hideConfirm ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </mat-form-field>
+        <div class="field-error" *ngIf="errors.confirmPassword">
+          <mat-icon>error_outline</mat-icon> {{ errors.confirmPassword }}
+        </div>
+      </div>
+
+      <!-- CAPTCHA — rendered by JS after view init -->
+      <div class="captcha-wrap">
+        <div id="recaptcha-container"></div>
+        <div *ngIf="captchaVerified" class="captcha-ok">
+          <mat-icon>check_circle</mat-icon> CAPTCHA vérifié
+        </div>
+        <p class="captcha-note">🔒 Protection anti-robot Google reCAPTCHA</p>
+      </div>
+
+      <!-- Server error -->
+      <div *ngIf="serverError" class="error-msg">
+        <mat-icon>error_outline</mat-icon> {{ serverError }}
+      </div>
+
+      <!-- Submit -->
+      <button mat-raised-button color="primary" class="full-btn"
+              (click)="onSubmit()" [disabled]="loading">
+        <mat-spinner *ngIf="loading" diameter="20" style="display:inline-block;margin-right:8px"></mat-spinner>
+        {{ loading ? 'Inscription en cours...' : 'CRÉER MON COMPTE' }}
+      </button>
+
+      <div class="login-link">
+        Déjà un compte ? <a (click)="goToLogin()">Se connecter</a>
+      </div>
+    </div>
+  </mat-card>
+</div>

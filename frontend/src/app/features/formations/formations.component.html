@@ -1,0 +1,285 @@
+<div class="page-content">
+  <div class="page-header">
+    <h1>
+      <mat-icon>menu_book</mat-icon>
+      {{ auth.isUtilisateur() ? 'Mes Formations' : (auth.isResponsable() ? 'Toutes les Formations' : 'Gestion des Formations') }}
+      <span *ngIf="auth.isUtilisateur()" class="role-badge">Lecture seule</span>
+      <span *ngIf="auth.isResponsable()" class="role-badge resp">Responsable</span>
+    </h1>
+    <div class="action-buttons">
+      <button mat-raised-button class="btn-excel" (click)="exportExcel()" [disabled]="exportLoading">
+        <mat-icon>download</mat-icon> {{ exportLoading ? 'Export...' : 'Excel' }}
+      </button>
+      <button mat-raised-button color="primary" (click)="openForm()" *ngIf="!auth.isResponsable()">
+        <mat-icon>add</mat-icon> Nouvelle Formation
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <mat-card style="margin-bottom:20px;padding:16px">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:12px;align-items:center">
+      <mat-form-field appearance="outline" style="margin:0">
+        <mat-label>Rechercher...</mat-label>
+        <input matInput [(ngModel)]="searchText" (ngModelChange)="applyFilters()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <mat-form-field appearance="outline" style="margin:0">
+        <mat-label>Domaine</mat-label>
+        <mat-select [(ngModel)]="filterDomaine" (ngModelChange)="applyFilters()">
+          <mat-option value="">Tous</mat-option>
+          <mat-option *ngFor="let d of domaines" [value]="d.id">{{ d.libelle }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" style="margin:0">
+        <mat-label>Année</mat-label>
+        <mat-select [(ngModel)]="filterAnnee" (ngModelChange)="applyFilters()">
+          <mat-option value="">Toutes</mat-option>
+          <mat-option *ngFor="let a of annees" [value]="a">{{ a }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button mat-icon-button (click)="searchText='';filterDomaine='';filterAnnee='';applyFilters()" matTooltip="Réinitialiser">
+        <mat-icon>filter_list_off</mat-icon>
+      </button>
+    </div>
+  </mat-card>
+
+  <!-- FORM (RESPONSABLE + ADMIN) -->
+  <mat-card *ngIf="showForm && canCRUD" class="form-card">
+    <mat-card-title>{{ editing ? '✏️ Modifier' : '➕ Créer' }} une Formation</mat-card-title>
+    <mat-card-content style="padding-top:20px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+
+        <!-- Titre -->
+        <div style="grid-column:1/-1" class="vfield" [class.verr]="formErrors.titre">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Titre *</mat-label>
+            <input matInput [(ngModel)]="current.titre" (blur)="onFieldBlur('titre')"
+                   maxlength="200" required>
+            <mat-hint>3-200 caractères</mat-hint>
+            <mat-icon matSuffix>title</mat-icon>
+          </mat-form-field>
+          <div class="verr-msg" *ngIf="formErrors.titre"><mat-icon>error_outline</mat-icon>{{formErrors.titre}}</div>
+        </div>
+
+        <!-- Année -->
+        <div class="vfield" [class.verr]="formErrors.annee">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Année *</mat-label>
+            <input matInput [(ngModel)]="current.annee" (blur)="onFieldBlur('annee')" type="number" min="2000" max="2100" required>
+            <mat-icon matSuffix>calendar_today</mat-icon>
+          </mat-form-field>
+          <div class="verr-msg" *ngIf="formErrors.annee"><mat-icon>error_outline</mat-icon>{{formErrors.annee}}</div>
+        </div>
+
+        <!-- Durée -->
+        <div class="vfield" [class.verr]="formErrors.duree">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Durée (jours) *</mat-label>
+            <input matInput [(ngModel)]="current.duree" (blur)="onFieldBlur('duree')" type="number" min="1" max="365" required>
+            <mat-hint>1-365 jours</mat-hint>
+            <mat-icon matSuffix>schedule</mat-icon>
+          </mat-form-field>
+          <div class="verr-msg" *ngIf="formErrors.duree"><mat-icon>error_outline</mat-icon>{{formErrors.duree}}</div>
+        </div>
+
+        <!-- Budget -->
+        <div class="vfield" [class.verr]="formErrors.budget">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Budget (DT)</mat-label>
+            <input matInput [(ngModel)]="current.budget" (blur)="onFieldBlur('budget')" type="number" min="0">
+            <mat-icon matSuffix>payments</mat-icon>
+          </mat-form-field>
+          <div class="verr-msg" *ngIf="formErrors.budget"><mat-icon>error_outline</mat-icon>{{formErrors.budget}}</div>
+        </div>
+
+        <!-- Domaine -->
+        <div class="vfield" [class.verr]="formErrors.domaine">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Domaine *</mat-label>
+            <mat-select [(ngModel)]="current.domaine" [compareWith]="compareById" (ngModelChange)="onFieldBlur('domaine')" required>
+              <mat-option *ngFor="let d of domaines" [value]="d">{{ d.libelle }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="verr-msg" *ngIf="formErrors.domaine"><mat-icon>error_outline</mat-icon>{{formErrors.domaine}}</div>
+        </div>
+
+        <!-- Lieu -->
+        <div class="vfield" [class.verr]="formErrors.lieu">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Lieu</mat-label>
+            <input matInput [(ngModel)]="current.lieu" (blur)="onFieldBlur('lieu')" maxlength="200">
+            <mat-hint>Max 200 caractères</mat-hint>
+            <mat-icon matSuffix>place</mat-icon>
+          </mat-form-field>
+          <div class="verr-msg" *ngIf="formErrors.lieu"><mat-icon>error_outline</mat-icon>{{formErrors.lieu}}</div>
+        </div>
+
+        <!-- Date -->
+        <mat-form-field appearance="outline">
+          <mat-label>Date de formation</mat-label>
+          <input matInput [(ngModel)]="current.dateFormation" type="date">
+          <mat-icon matSuffix>event</mat-icon>
+        </mat-form-field>
+
+        <!-- Formateur -->
+        <mat-form-field appearance="outline">
+          <mat-label>Formateur</mat-label>
+          <mat-select [(ngModel)]="current.formateur" [compareWith]="compareById">
+            <mat-option [value]="null">— Aucun —</mat-option>
+            <mat-option *ngFor="let f of formateurs" [value]="f">
+              {{ f.prenom }} {{ f.nom }} ({{ f.type }})
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <!-- Participants -->
+        <mat-form-field appearance="outline" style="grid-column:1/-1">
+          <mat-label>Participants</mat-label>
+          <mat-select [(ngModel)]="current.participants" multiple [compareWith]="compareById">
+            <mat-option *ngFor="let p of allParticipants" [value]="p">
+              {{ p.prenom }} {{ p.nom }} — {{ p.structure?.libelle ?? "" }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+      </div>
+    </mat-card-content>
+    <mat-card-actions style="padding:16px;gap:8px">
+      <button mat-raised-button color="primary" (click)="save()"><mat-icon>save</mat-icon> Enregistrer</button>
+      <button mat-button (click)="cancel()"><mat-icon>close</mat-icon> Annuler</button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- DETAIL -->
+  <mat-card *ngIf="showDetail && selectedFormation" class="detail-card">
+    <mat-card-title>📋 {{ selectedFormation.titre }}</mat-card-title>
+    <mat-card-content style="padding-top:16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <p><strong>Année :</strong> {{ selectedFormation.annee }}</p>
+        <p><strong>Durée :</strong> {{ selectedFormation.duree }} jour(s)</p>
+        <p><strong>Budget :</strong> {{ selectedFormation.budget || 0 | number }} DT</p>
+        <p><strong>Domaine :</strong> {{ selectedFormation.domaine?.libelle ?? "" }}</p>
+        <p><strong>Lieu :</strong> {{ selectedFormation.lieu || 'N/A' }}</p>
+        <p><strong>Date :</strong> {{ selectedFormation.dateFormation || 'N/A' }}</p>
+        <p style="grid-column:1/-1"><strong>Formateur :</strong>
+          {{ selectedFormation.formateur ? selectedFormation.formateur.prenom+' '+selectedFormation.formateur.nom : 'Non assigné' }}
+        </p>
+        <p *ngIf="!auth.isUtilisateur()" style="grid-column:1/-1">
+          <strong>Déposé par :</strong>
+          <span style="color:var(--accent-cyan);font-weight:600;margin-left:6px">
+            {{ selectedFormation.createdByLogin || ('User #' + selectedFormation.createdById) || '—' }}
+          </span>
+        </p>
+      </div>
+      <p style="margin-top:12px">
+        <strong>Participants ({{ selectedFormation.participants?.length || 0 }}) :</strong>
+        <span *ngIf="!auth.isUtilisateur()" style="font-size:.78rem;color:var(--text-muted);margin-left:8px">
+          Cliquer sur un participant pour voir ses infos
+        </span>
+      </p>
+      <div class="chip-list" style="margin-top:8px">
+        <mat-chip
+          *ngFor="let p of selectedFormation.participants"
+          (click)="goToParticipant(p)"
+          style="cursor:pointer"
+          matTooltip="Voir les informations de {{ p.prenom }} {{ p.nom }}">
+          {{ p.prenom }} {{ p.nom }}
+        </mat-chip>
+        <span *ngIf="!selectedFormation.participants?.length" style="color:#556677;font-style:italic">Aucun participant</span>
+      </div>
+    </mat-card-content>
+    <mat-card-actions style="padding:12px 16px">
+      <button mat-button (click)="cancel()"><mat-icon>close</mat-icon> Fermer</button>
+      <button mat-raised-button color="primary" (click)="openForm(selectedFormation)"
+              *ngIf="canCRUD && !auth.isResponsable()" style="margin-left:8px">
+        <mat-icon>edit</mat-icon> Modifier
+      </button>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- TABLE -->
+  <mat-card>
+    <mat-card-content style="padding:0;overflow-x:auto">
+      <table mat-table [dataSource]="filtered">
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef>#</th>
+          <td mat-cell *matCellDef="let r" style="color:#556677">{{r.id}}</td>
+        </ng-container>
+        <ng-container matColumnDef="titre">
+          <th mat-header-cell *matHeaderCellDef>Titre</th>
+          <td mat-cell *matCellDef="let r"><strong>{{r.titre}}</strong></td>
+        </ng-container>
+        <ng-container matColumnDef="annee">
+          <th mat-header-cell *matHeaderCellDef>Année</th>
+          <td mat-cell *matCellDef="let r">
+            <span class="badge-blue">{{r.annee}}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="duree">
+          <th mat-header-cell *matHeaderCellDef>Durée</th>
+          <td mat-cell *matCellDef="let r" style="color:#8899aa">{{r.duree}}j</td>
+        </ng-container>
+        <ng-container matColumnDef="budget">
+          <th mat-header-cell *matHeaderCellDef>Budget</th>
+          <td mat-cell *matCellDef="let r" style="color:#00e676">{{r.budget | number}} DT</td>
+        </ng-container>
+        <ng-container matColumnDef="domaine">
+          <th mat-header-cell *matHeaderCellDef>Domaine</th>
+          <td mat-cell *matCellDef="let r"><span class="badge-purple">{{r.domaine?.libelle}}</span></td>
+        </ng-container>
+        <ng-container matColumnDef="lieu">
+          <th mat-header-cell *matHeaderCellDef>Lieu</th>
+          <td mat-cell *matCellDef="let r" style="color:#8899aa">{{r.lieu||'—'}}</td>
+        </ng-container>
+        <ng-container matColumnDef="dateFormation">
+          <th mat-header-cell *matHeaderCellDef>Date</th>
+          <td mat-cell *matCellDef="let r" style="color:#8899aa">{{r.dateFormation||'—'}}</td>
+        </ng-container>
+        <ng-container matColumnDef="formateur">
+          <th mat-header-cell *matHeaderCellDef>Formateur</th>
+          <td mat-cell *matCellDef="let r">{{r.formateur ? r.formateur.prenom+' '+r.formateur.nom : '—'}}</td>
+        </ng-container>
+        <ng-container matColumnDef="participants">
+          <th mat-header-cell *matHeaderCellDef>Participants</th>
+          <td mat-cell *matCellDef="let r">
+            <span class="badge-gold">{{ r.participants?.length || 0 }}</span>
+          </td>
+        </ng-container>
+
+        <!-- Colonne Déposé par (ADMIN + RESPONSABLE seulement) -->
+        <ng-container matColumnDef="deposePar">
+          <th mat-header-cell *matHeaderCellDef>Déposé par</th>
+          <td mat-cell *matCellDef="let r">
+            <span style="color:var(--accent-cyan);font-weight:600">
+              {{ r.createdByLogin || (r.createdById ? 'User #' + r.createdById : '—') }}
+            </span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-icon-button (click)="viewDetail(r)" matTooltip="Voir détail"><mat-icon>visibility</mat-icon></button>
+            <button mat-icon-button color="primary" (click)="openForm(r)" matTooltip="Modifier"
+                    *ngIf="!auth.isResponsable()"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button color="warn" (click)="delete(r.id)" matTooltip="Supprimer"
+                    *ngIf="!auth.isResponsable()"><mat-icon>delete</mat-icon></button>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="detail">
+          <th mat-header-cell *matHeaderCellDef>Détail</th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-icon-button (click)="viewDetail(r)" matTooltip="Voir détail"><mat-icon>visibility</mat-icon></button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let r; columns: displayedColumns;"></tr>
+      </table>
+      <div *ngIf="filtered.length===0" class="empty-state">
+        <mat-icon>search_off</mat-icon>
+        <p>{{ auth.isUtilisateur() ? 'Aucune formation vous concerne pour le moment' : 'Aucune formation trouvée' }}</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

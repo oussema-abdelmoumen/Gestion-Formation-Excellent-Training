@@ -1,0 +1,70 @@
+<div class="page-content">
+  <div class="page-header">
+    <h1><mat-icon>manage_accounts</mat-icon> Gestion des Utilisateurs</h1>
+    <button mat-raised-button color="primary" (click)="openForm()">
+      <mat-icon>person_add</mat-icon> Nouvel Utilisateur
+    </button>
+  </div>
+
+  <mat-card *ngIf="showForm" class="form-card">
+    <mat-card-title>{{ editing ? '✏️ Modifier' : '➕ Ajouter' }} un Utilisateur</mat-card-title>
+    <mat-card-content style="padding-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <mat-form-field appearance="outline">
+        <mat-label>Login *</mat-label>
+        <input matInput [(ngModel)]="current.login" required>
+        <mat-icon matSuffix>person</mat-icon>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ editing ? 'Nouveau mot de passe (optionnel)' : 'Mot de passe *' }}</mat-label>
+        <input matInput [(ngModel)]="current.password" type="password" [required]="!editing">
+        <mat-icon matSuffix>lock</mat-icon>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Rôle *</mat-label>
+        <mat-select [(ngModel)]="current.role" [compareWith]="compareById" required>
+          <mat-option *ngFor="let r of roles" [value]="r">{{ r.nom }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-card-content>
+    <mat-card-actions style="padding:16px;gap:8px">
+      <button mat-raised-button color="primary" (click)="save()"><mat-icon>save</mat-icon> Enregistrer</button>
+      <button mat-button (click)="cancel()"><mat-icon>close</mat-icon> Annuler</button>
+    </mat-card-actions>
+  </mat-card>
+
+  <mat-card>
+    <mat-card-content style="padding:0">
+      <table mat-table [dataSource]="items">
+        <ng-container matColumnDef="id"><th mat-header-cell *matHeaderCellDef>#</th><td mat-cell *matCellDef="let r" style="color:#556677">{{r.id}}</td></ng-container>
+        <ng-container matColumnDef="login"><th mat-header-cell *matHeaderCellDef>Login</th>
+          <td mat-cell *matCellDef="let r">
+            <span style="display:flex;align-items:center;gap:8px">
+              <mat-icon style="font-size:18px;height:18px;width:18px;color:#8899aa">account_circle</mat-icon>
+              <strong>{{r.login}}</strong>
+            </span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="role"><th mat-header-cell *matHeaderCellDef>Rôle</th>
+          <td mat-cell *matCellDef="let r">
+            <span [style.background]="r.role?.nom==='ADMIN' ? 'rgba(255,68,68,.12)' : r.role?.nom==='RESPONSABLE' ? 'rgba(255,214,10,.12)' : 'rgba(0,230,118,.12)'"
+                  [style.color]="r.role?.nom==='ADMIN' ? '#ff4444' : r.role?.nom==='RESPONSABLE' ? '#ffd60a' : '#00e676'"
+                  style="padding:4px 12px;border-radius:12px;font-size:.82rem;font-weight:700;letter-spacing:.5px">
+              {{ r.role?.nom }}
+            </span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions"><th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let r">
+            <button mat-icon-button color="primary" (click)="openForm(r)" matTooltip="Modifier"><mat-icon>edit</mat-icon></button>
+            <button mat-icon-button color="warn" (click)="delete(r.id)" matTooltip="Supprimer"><mat-icon>delete</mat-icon></button>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let r; columns: displayedColumns;"></tr>
+      </table>
+      <div *ngIf="items.length===0" class="empty-state">
+        <mat-icon>manage_accounts</mat-icon><p>Aucun utilisateur trouvé</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

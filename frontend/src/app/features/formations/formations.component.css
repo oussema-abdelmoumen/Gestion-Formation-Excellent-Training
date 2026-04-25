@@ -1,0 +1,9 @@
+.role-badge{font-size:.72rem;background:rgba(0,180,216,.12);color:#00b4d8;padding:3px 10px;border-radius:12px;margin-left:8px;font-weight:500;}
+.role-badge.resp{background:rgba(255,214,10,.12);color:#ffd60a;}
+.badge-blue{background:rgba(0,180,216,.12);color:#00b4d8;padding:3px 8px;border-radius:12px;font-size:.8rem;font-weight:600;}
+.badge-purple{background:rgba(124,77,255,.12);color:#a990ff;padding:3px 8px;border-radius:12px;font-size:.8rem;}
+.badge-gold{background:rgba(255,214,10,.12);color:#ffd60a;padding:3px 10px;border-radius:12px;font-weight:700;font-size:.85rem;}
+.vfield{margin-bottom:0;}
+.vfield.verr .mdc-notched-outline__leading,.vfield.verr .mdc-notched-outline__notch,.vfield.verr .mdc-notched-outline__trailing{border-color:#ff4444!important;}
+.verr-msg{display:flex;align-items:center;gap:5px;color:#ff6666;font-size:.75rem;margin:-10px 0 6px;padding:0 4px;}
+.verr-msg mat-icon{font-size:14px;height:14px;width:14px;}

@@ -1,0 +1,187 @@
+<div class="landing-root" [class.light]="theme.isLight()">
+
+  <!-- NAVBAR -->
+  <nav class="land-nav" [class.scrolled]="scrolled">
+    <div class="land-nav-inner">
+      <div class="land-brand">
+        <mat-icon>school</mat-icon>
+        <span>Excellent <b>Training</b></span>
+      </div>
+      <div class="land-nav-actions">
+        <button class="theme-toggle" (click)="theme.toggle()" [title]="theme.isLight() ? 'Mode sombre' : 'Mode clair'">
+          <mat-icon>{{ theme.isLight() ? 'dark_mode' : 'light_mode' }}</mat-icon>
+        </button>
+        <button class="land-btn-cnx" (click)="goToLogin()">
+          <mat-icon>login</mat-icon> Connexion
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <!-- Particles -->
+    <div class="particles">
+      <div *ngFor="let p of particles" class="particle"
+           [style.left.%]="p.x" [style.top.%]="p.y"
+           [style.width.px]="p.size" [style.height.px]="p.size"
+           [style.opacity]="p.opacity"
+           [style.animation-delay.s]="p.delay"
+           [style.animation-duration.s]="p.duration">
+      </div>
+    </div>
+
+    <!-- Glows -->
+    <div class="hero-glow glow1"></div>
+    <div class="hero-glow glow2"></div>
+    <div class="hero-glow glow3"></div>
+
+    <div class="hero-content">
+      <div class="hero-badge">
+        <mat-icon>verified</mat-icon>
+        Centre de Formation — Green Building
+      </div>
+      <h1 class="hero-title">
+        Gérez vos formations<br>
+        <span class="gradient-text">intelligemment</span>
+      </h1>
+      <p class="hero-desc">
+        Une plateforme complète pour planifier, organiser et suivre toutes les activités de formation
+        de votre centre — du participant au responsable, en passant par le formateur.
+      </p>
+      <div class="hero-actions">
+        <button class="cta-primary" (click)="goToLogin()">
+          <mat-icon>rocket_launch</mat-icon>
+          Accéder à la plateforme
+        </button>
+        <button class="cta-secondary" (click)="goToLogin()">
+          <mat-icon>info</mat-icon>
+          En savoir plus
+        </button>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="hero-stats">
+        <div *ngFor="let s of stats" class="hero-stat">
+          <div class="stat-num">{{ s.value }}</div>
+          <div class="stat-lbl">{{ s.label }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Floating card visual -->
+    <div class="hero-visual">
+      <div class="float-card card1">
+        <mat-icon>menu_book</mat-icon>
+        <div>
+          <div class="fc-title">Formation React</div>
+          <div class="fc-sub">12 participants · 5 jours</div>
+        </div>
+        <span class="fc-badge active">En cours</span>
+      </div>
+      <div class="float-card card2">
+        <mat-icon>check_circle</mat-icon>
+        <div>
+          <div class="fc-title">Formation planifiée</div>
+          <div class="fc-sub">Tunis · 2026</div>
+        </div>
+      </div>
+      <div class="float-card card3">
+        <div class="mini-chart">
+          <div class="bar" style="height:40%"></div>
+          <div class="bar" style="height:65%"></div>
+          <div class="bar" style="height:80%"></div>
+          <div class="bar" style="height:55%"></div>
+          <div class="bar" style="height:90%"></div>
+          <div class="bar" style="height:70%"></div>
+        </div>
+        <div>
+          <div class="fc-title">8 formations</div>
+          <div class="fc-sub">cette année</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features-section">
+    <div class="section-inner">
+      <div class="section-tag">Fonctionnalités</div>
+      <h2 class="section-title">Tout ce dont vous avez besoin</h2>
+      <p class="section-desc">Une solution intégrée pensée pour le centre de formation Excellent Training</p>
+
+      <div class="features-grid">
+        <div *ngFor="let f of features; let i = index" class="feature-card" [style.animation-delay.ms]="i * 80">
+          <div class="feat-icon-wrap">
+            <mat-icon>{{ f.icon }}</mat-icon>
+          </div>
+          <h3>{{ f.title }}</h3>
+          <p>{{ f.desc }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES SECTION -->
+  <section class="roles-section">
+    <div class="section-inner">
+      <div class="section-tag">Accès</div>
+      <h2 class="section-title">3 niveaux d'accès</h2>
+      <div class="roles-grid">
+        <div class="role-card utilisateur">
+          <div class="role-icon"><mat-icon>person</mat-icon></div>
+          <h3>Utilisateur</h3>
+          <ul>
+            <li><mat-icon>check</mat-icon> Gestion des participants</li>
+            <li><mat-icon>check</mat-icon> Gestion des formateurs</li>
+            <li><mat-icon>visibility</mat-icon> Consultation des formations</li>
+          </ul>
+        </div>
+        <div class="role-card responsable featured">
+          <div class="role-badge">Cœur du système</div>
+          <div class="role-icon"><mat-icon>manage_accounts</mat-icon></div>
+          <h3>Responsable</h3>
+          <ul>
+            <li><mat-icon>check</mat-icon> CRUD formations complètes</li>
+            <li><mat-icon>check</mat-icon> Organisation des sessions</li>
+            <li><mat-icon>check</mat-icon> Statistiques & rapports</li>
+          </ul>
+        </div>
+        <div class="role-card admin">
+          <div class="role-icon"><mat-icon>admin_panel_settings</mat-icon></div>
+          <h3>Administrateur</h3>
+          <ul>
+            <li><mat-icon>check</mat-icon> Accès total</li>
+            <li><mat-icon>check</mat-icon> Gestion des comptes</li>
+            <li><mat-icon>check</mat-icon> Configuration système</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="cta-section">
+    <div class="cta-glow"></div>
+    <div class="cta-inner">
+      <h2>Prêt à commencer ?</h2>
+      <p>Connectez-vous à votre espace de gestion de formation</p>
+      <div style="display:flex;justify-content:center;width:100%">
+        <button class="cta-primary large" (click)="goToLogin()">
+          <mat-icon>login</mat-icon>
+          Se connecter maintenant
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="land-footer">
+    <div class="footer-brand">
+      <mat-icon>school</mat-icon>
+      <span>Excellent Training</span>
+    </div>
+    <p>Institut Supérieur d'Informatique — Université de Tunis El Manar · 2026</p>
+  </footer>
+
+</div>

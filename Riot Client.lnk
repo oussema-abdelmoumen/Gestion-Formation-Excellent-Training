@@ -1,0 +1,562 @@
+# 📋 Rapport Complet — Application de Gestion de Formation
+**ISI Tunis El Manar — 2026**
+
+---
+
+## 1. Vue d'ensemble du projet
+
+L'application **"Gestion de Formation"** est une plateforme web full-stack permettant de gérer les cycles de formation d'une organisation. Elle permet de créer, organiser et suivre des formations avec leurs formateurs, participants, domaines et structures.
+
+### Nom de l'application : **Excellent Training**
+### Ports :
+| Service | Port |
+|---------|------|
+| Backend (Spring Boot) | `http://localhost:8080` |
+| Frontend (Angular) | `http://localhost:4200` |
+| Base de données MySQL | `3306` |
+
+---
+
+## 2. Architecture Générale
+
+```mermaid
+graph TB
+    subgraph "Frontend — Angular 17"
+        A[Navigateur utilisateur<br>localhost:4200]
+        A --> B[Angular Router]
+        B --> C[AuthGuard / RoleGuard]
+        C --> D[Composants Angular]
+        D --> E[Services Angular]
+        E --> F[HTTP Client]
+    end
+
+    subgraph "Backend — Spring Boot 3.2"
+        G[REST Controllers<br>/api/**]
+        G --> H[Service Layer]
+        H --> I[Repository Layer<br>Spring Data JPA]
+        I --> J[MySQL Database]
+        K[JwtAuthFilter] --> G
+        L[SecurityConfig] --> K
+    end
+
+    F -->|"HTTP + Bearer JWT"| G
+    G -->|"JSON Response"| F
+```
+
+---
+
+## 3. Stack Technologique
+
+### Backend
+| Technologie | Version | Rôle |
+|-------------|---------|------|
+| Java | 17 | Langage principal |
+| Spring Boot | 3.2.0 | Framework principal |
+| Spring Security | 3.2.0 | Authentification & autorisation |
+| Spring Data JPA | 3.2.0 | ORM / accès base de données |
+| MySQL Connector | runtime | Driver JDBC |
+| JWT (JJWT) | 0.11.5 | Tokens d'authentification |
+| Lombok | 1.18.32 | Génération de code (getters/setters) |
+| Spring Mail | 3.2.0 | Envoi d'emails de vérification |
+| Apache POI | 5.2.5 | Export Excel (.xlsx) |
+| Thymeleaf | 3.2.0 | Templates HTML pour emails |
+| Bean Validation | Jakarta | Validation des champs |
+
+### Frontend
+| Technologie | Version | Rôle |
+|-------------|---------|------|
+| Angular | 17+ | Framework SPA |
+| TypeScript | — | Langage principal |
+| RxJS | — | Programmation réactive |
+| Angular Router | — | Navigation entre pages |
+| Angular HTTP Client | — | Appels REST vers le backend |
+
+---
+
+## 4. Modèle de Données (Base de données MySQL)
+
+### Schéma de la base : `gestion_formation`
+
+```mermaid
+erDiagram
+    ROLE {
+        int id PK
+        varchar nom
+    }
+    UTILISATEUR {
+        int id PK
+        varchar login UK
+        varchar password
+        varchar email UK
+        int id_role FK
+        boolean email_verifie
+        varchar token_verification
+        boolean actif
+    }
+    DOMAINE {
+        int id PK
+        varchar libelle
+    }
+    PROFIL {
+        int id PK
+        varchar libelle
+    }
+    STRUCTURE {
+        int id PK
+        varchar libelle
+    }
+    EMPLOYEUR {
+        int id PK
+        varchar nom_employeur
+    }
+    FORMATEUR {
+        int id PK
+        varchar nom
+        varchar prenom
+        varchar email
+        varchar tel
+        varchar type
+        int id_employeur FK
+    }
+    PARTICIPANT {
+        int id PK
+        varchar nom
+        varchar prenom
+        varchar email
+        varchar tel
+        int id_structure FK
+        int id_profil FK
+    }
+    FORMATION {
+        bigint id PK
+        varchar titre
+        int annee
+        int duree
+        double budget
+        varchar lieu
+        date date_formation
+        int id_domaine FK
+        int id_formateur FK
+        int created_by_id
+    }
+    FORMATION_PARTICIPANT {
+        bigint id_formation FK
+        int id_participant FK
+    }
+
+    UTILISATEUR ||--o{ ROLE : "a"
+    FORMATEUR ||--o{ EMPLOYEUR : "travaille pour"
+    PARTICIPANT ||--o{ STRUCTURE : "appartient à"
+    PARTICIPANT ||--o{ PROFIL : "a un"
+    FORMATION ||--o{ DOMAINE : "appartient à"
+    FORMATION ||--o{ FORMATEUR : "animée par"
+    FORMATION }o--o{ PARTICIPANT : "formation_participant"
+```
+
+### Données initiales (seed data)
+- **Rôles** : ADMIN, RESPONSABLE, UTILISATEUR
+- **Comptes par défaut** : `admin`, `responsable`, `utilisateur` (mot de passe: `admin123`)
+- **Domaines** : Informatique, Finance, Mécanique, Management, Juridique, RH
+- **Profils** : Informaticien Bac+5, Informaticien Bac+3, Gestionnaire, Juriste, Technicien Supérieur, Mécanicien
+- **Structures** : Direction Centrale, Directions Régionales (Nord/Sud/Est/Ouest)
+- **Employeurs** : Green Building, Société Externe A, Société Externe B
+
+---
+
+## 5. Architecture Backend — Couches
+
+```mermaid
+graph LR
+    subgraph "Couche Contrôleur"
+        C1[AuthController<br>/api/auth]
+        C2[FormationController<br>/api/formations]
+        C3[FormateurController<br>/api/formateurs]
+        C4[ParticipantController<br>/api/participants]
+        C5[DomaineController<br>/api/domaines]
+        C6[UtilisateurController<br>/api/utilisateurs]
+        C7[StructureController<br>/api/structures]
+        C8[ProfilController<br>/api/profils]
+        C9[EmployeurController<br>/api/employeurs]
+        C10[RoleController<br>/api/roles]
+    end
+
+    subgraph "Couche Service"
+        S1[UtilisateurService]
+        S2[FormationService]
+        S3[EmailService]
+        S4[CaptchaService]
+    end
+
+    subgraph "Couche Repository"
+        R1[UtilisateurRepository]
+        R2[FormationRepository]
+        R3[FormateurRepository]
+        R4[ParticipantRepository]
+    end
+
+    C1 --> S1
+    C1 --> S4
+    S1 --> S3
+    C2 --> S2
+    S1 --> R1
+    S2 --> R2
+```
+
+---
+
+## 6. Système de Sécurité — JWT
+
+### Flux d'authentification complet
+
+```mermaid
+sequenceDiagram
+    participant U as Utilisateur
+    participant FE as Angular Frontend
+    participant AC as AuthController
+    participant DB as MySQL
+    participant JWT as JwtUtil
+
+    U->>FE: Saisit login + mot de passe
+    FE->>AC: POST /api/auth/login {login, password}
+    AC->>DB: SELECT utilisateur WHERE login=?
+    DB-->>AC: Utilisateur trouvé
+    AC->>AC: BCrypt.matches(password, hash)
+    AC->>AC: Vérifie actif = true
+    AC->>JWT: generateToken(login, role)
+    JWT-->>AC: JWT Token (24h)
+    AC-->>FE: {token, role, login, id}
+    FE->>FE: localStorage.setItem('token', ...)
+    FE->>FE: Redirige selon rôle
+```
+
+### Structure du JWT Token
+Le token JWT contient :
+- `sub` = login de l'utilisateur
+- `role` = rôle (ADMIN / RESPONSABLE / UTILISATEUR)
+- `iat` = date de création
+- `exp` = expiration (24 heures)
+
+### Filtre JWT (JwtAuthFilter)
+À chaque requête HTTP, le filtre :
+1. Extrait le header `Authorization: Bearer <token>`
+2. Valide le token avec `JwtUtil`
+3. Récupère le login et le rôle depuis le token
+4. Crée un `UsernamePasswordAuthenticationToken` dans le `SecurityContext`
+
+---
+
+## 7. Inscription et Vérification Email
+
+### Flux d'auto-inscription
+
+```mermaid
+flowchart TD
+    A[Utilisateur remplit le formulaire] --> B{CAPTCHA valide ?}
+    B -->|Non| Z1[Erreur CAPTCHA]
+    B -->|Oui| C{Mot de passe fort ?}
+    C -->|Non| Z2[Erreur : mot de passe faible]
+    C -->|Oui| D{Login / email déjà utilisé ?}
+    D -->|Oui| Z3[Erreur : déjà existant]
+    D -->|Non| E[Crée utilisateur actif=false]
+    E --> F[Génère UUID token vérification]
+    F --> G[Envoie email HTML avec lien]
+    G --> H[Utilisateur clique le lien]
+    H --> I[GET /api/auth/verify?token=...]
+    I --> J[actif=true, email_verifie=true]
+    J --> K[✅ Peut se connecter]
+```
+
+### Règles du mot de passe fort
+- Minimum 8 caractères
+- Au moins 1 majuscule
+- Au moins 1 minuscule
+- Au moins 1 chiffre
+- Au moins 1 caractère spécial (`!@#$%^&*...`)
+
+---
+
+## 8. Gestion des Rôles et Permissions
+
+### Tableau des permissions
+
+| Fonctionnalité | ADMIN | RESPONSABLE | UTILISATEUR |
+|----------------|-------|-------------|-------------|
+| Dashboard / statistiques | ✅ | ✅ | ❌ |
+| Formations — Voir | ✅ | ✅ | ✅ |
+| Formations — CRUD | ✅ | ❌ | ✅ (ses propres) |
+| Formateurs — Voir | ✅ | ✅ | ✅ |
+| Formateurs — CRUD | ✅ | ❌ | ✅ |
+| Participants — Voir | ✅ | ✅ | ✅ |
+| Participants — CRUD | ✅ | ❌ | ✅ |
+| Domaines — Voir | ✅ | ✅ | ✅ |
+| Domaines — CRUD | ✅ | ❌ | ❌ |
+| Structures — Voir/CRUD | ✅ | ❌ | ✅ (voir seulement) |
+| Profils — Voir/CRUD | ✅ | ❌ | ✅ (voir seulement) |
+| Employeurs — CRUD | ✅ | ❌ | ❌ |
+| Utilisateurs — CRUD | ✅ | ❌ | ❌ |
+
+> **Note** : Le RESPONSABLE a un rôle de **consultation uniquement** — il peut voir les données mais ne peut rien modifier.
+
+### Redirection après connexion
+- **UTILISATEUR** → `/app/formations`
+- **ADMIN / RESPONSABLE** → `/app/dashboard`
+
+---
+
+## 9. Routes Angular (Frontend)
+
+```mermaid
+graph TD
+    Root["/"] --> Landing[LandingComponent<br>Page d'accueil]
+    Root --> Login["/login<br>LoginComponent"]
+    Root --> Register["/register<br>RegisterComponent"]
+    Root --> Verify["/verify-email<br>VerifyEmailComponent"]
+
+    Root --> App["/app — AuthGuard requis"]
+    App --> Dashboard["/app/dashboard<br>ADMIN + RESPONSABLE"]
+    App --> Formations["/app/formations<br>Tous les rôles"]
+    App --> Formateurs["/app/formateurs<br>Tous les rôles"]
+    App --> Participants["/app/participants<br>Tous les rôles"]
+    App --> Domaines["/app/domaines<br>Tous les rôles"]
+    App --> Profils["/app/profils<br>ADMIN + UTILISATEUR"]
+    App --> Structures["/app/structures<br>ADMIN + UTILISATEUR"]
+    App --> Employeurs["/app/employeurs<br>ADMIN seulement"]
+    App --> Utilisateurs["/app/utilisateurs<br>ADMIN seulement"]
+```
+
+### Guards de navigation
+- **`AuthGuard`** : Vérifie que le token JWT existe dans `localStorage`. Si non → redirige vers `/login`
+- **`RoleGuard`** : Compare le rôle stocké dans `localStorage` avec les rôles autorisés pour la route. Si non autorisé → redirige vers `/access-denied`
+
+---
+
+## 10. API REST — Endpoints principaux
+
+### Authentification `/api/auth`
+| Méthode | Endpoint | Corps | Description |
+|---------|----------|-------|-------------|
+| POST | `/api/auth/login` | `{login, password}` | Connexion — retourne JWT |
+| POST | `/api/auth/register` | `{login, email, password, captchaToken}` | Auto-inscription |
+| GET | `/api/auth/verify?token=...` | — | Vérification email |
+
+### Formations `/api/formations`
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/api/formations` | Liste toutes les formations |
+| GET | `/api/formations/{id}` | Détail d'une formation |
+| POST | `/api/formations` | Créer une formation |
+| PUT | `/api/formations/{id}` | Modifier une formation |
+| DELETE | `/api/formations/{id}` | Supprimer une formation |
+| GET | `/api/formations/stats/domaine` | Stats par domaine (graphique) |
+| GET | `/api/formations/stats/annee` | Stats par année (graphique) |
+| GET | `/api/formations/stats/budget` | Budget par domaine (graphique) |
+| GET | `/api/formations/export/excel` | Export Excel (.xlsx) |
+| GET | `/api/formations/by-user/{userId}` | Formations d'un utilisateur |
+
+### CRUD Standard (même pattern pour tous)
+| Ressource | Endpoint de base |
+|-----------|-----------------|
+| Domaines | `/api/domaines` |
+| Structures | `/api/structures` |
+| Profils | `/api/profils` |
+| Employeurs | `/api/employeurs` |
+| Formateurs | `/api/formateurs` |
+| Participants | `/api/participants` |
+| Utilisateurs | `/api/utilisateurs` |
+| Rôles | `/api/roles` |
+
+---
+
+## 11. Fonctionnalités Spéciales
+
+### 📊 Export Excel
+Le `FormationController` génère un fichier `.xlsx` avec **Apache POI** contenant :
+- En-têtes stylisées (fond bleu indigo, texte blanc, bold)
+- Lignes alternées (fond bleu clair pair)
+- Colonnes : ID, Titre, Année, Durée, Budget, Domaine, Formateur, Lieu, Date, Nb Participants, Liste Participants
+
+### 📧 Email de vérification
+Le `EmailService` envoie un email HTML complet avec :
+- Design responsive avec gradient bleu
+- Logo "🎓 Excellent Training"
+- Lien de vérification sécurisé (UUID unique)
+- Expiration 24h (mentionnée dans l'email)
+
+### 📈 Tableau de bord statistiques
+Accessible uniquement aux rôles ADMIN et RESPONSABLE :
+- Graphique formations par domaine (`Map<String, Long>`)
+- Graphique formations par année (`Map<Integer, Long>`)
+- Budget par domaine (`Map<String, Double>`)
+
+### 🔗 Traçabilité des créateurs
+Chaque formation stocke `created_by_id` (ID de l'utilisateur créateur). Le login du créateur est chargé dynamiquement à l'affichage (`createdByLogin` — champ `@Transient` non stocké en base).
+
+---
+
+## 12. Structure des Fichiers du Projet
+
+```
+gestion-formation/
+├── backend/                          # Spring Boot
+│   ├── pom.xml                       # Dépendances Maven
+│   └── src/main/java/tn/isi/gestionformation/
+│       ├── GestionFormationApplication.java   # Point d'entrée
+│       ├── config/
+│       │   ├── JwtUtil.java          # Génération/validation JWT
+│       │   ├── JwtAuthFilter.java    # Filtre HTTP JWT
+│       │   └── SecurityConfig.java   # Config Spring Security + CORS
+│       ├── entity/                   # Entités JPA (tables BD)
+│       │   ├── Formation.java
+│       │   ├── Formateur.java
+│       │   ├── Participant.java
+│       │   ├── Utilisateur.java
+│       │   ├── Domaine.java
+│       │   ├── Profil.java
+│       │   ├── Structure.java
+│       │   ├── Employeur.java
+│       │   └── Role.java
+│       ├── repository/               # Spring Data JPA Repositories
+│       ├── service/                  # Logique métier
+│       │   ├── FormationService.java
+│       │   ├── UtilisateurService.java
+│       │   ├── EmailService.java
+│       │   └── CaptchaService.java
+│       └── controller/               # Contrôleurs REST
+│           ├── AuthController.java
+│           ├── FormationController.java
+│           └── ... (un par entité)
+│
+├── frontend/                         # Angular 17
+│   └── src/
+│       ├── index.html
+│       ├── main.ts
+│       ├── styles.css / styles.scss
+│       └── app/
+│           ├── app-routing.module.ts # Routes + Guards
+│           ├── app.module.ts
+│           ├── core/
+│           │   ├── guards/
+│           │   │   ├── auth.guard.ts       # Requiert connexion
+│           │   │   └── role.guard.ts       # Vérifie le rôle
+│           │   ├── interceptors/           # (HTTP intercepteurs)
+│           │   └── services/
+│           │       ├── auth.service.ts     # Login/Logout/JWT
+│           │       ├── formation.service.ts
+│           │       ├── theme.service.ts    # Mode sombre/clair
+│           │       └── ... (un par entité)
+│           ├── shared/
+│           │   └── models/index.ts         # Interfaces TypeScript
+│           └── features/
+│               ├── landing/               # Page d'accueil
+│               ├── auth/                  # Login, Register, Verify
+│               ├── dashboard/             # Statistiques graphiques
+│               ├── formations/            # CRUD formations
+│               ├── formateurs/            # CRUD formateurs
+│               ├── participants/          # CRUD participants
+│               ├── domaines/              # CRUD domaines
+│               ├── structures/            # CRUD structures
+│               ├── profils/               # CRUD profils
+│               ├── employeurs/            # CRUD employeurs
+│               ├── utilisateurs/          # Gestion utilisateurs
+│               ├── navbar/                # Barre de navigation
+│               └── access-denied/        # Page 403
+│
+└── database/
+    └── schema.sql                    # Script SQL initialisation
+```
+
+---
+
+## 13. Flux Complet d'Utilisation
+
+### Scénario : Un UTILISATEUR crée une formation
+
+```mermaid
+sequenceDiagram
+    participant U as Utilisateur
+    participant NG as Angular App
+    participant JWT as localStorage
+    participant API as Spring Boot API
+    participant DB as MySQL
+
+    U->>NG: Clique "Connexion"
+    NG->>API: POST /api/auth/login
+    API-->>NG: {token, role="UTILISATEUR", id}
+    NG->>JWT: Stocke token + role + id
+    NG->>NG: Redirige vers /app/formations
+
+    U->>NG: Clique "Nouvelle Formation"
+    NG->>NG: Affiche formulaire
+    U->>NG: Remplit titre, domaine, formateur, participants...
+    NG->>API: POST /api/formations {titre, annee, duree, ...}
+    Note over API: Header: Authorization: Bearer <token>
+    API->>API: JwtAuthFilter valide le token
+    API->>API: Vérifie rôle UTILISATEUR autorisé
+    API->>DB: INSERT INTO formation...
+    DB-->>API: Formation créée (id=...)
+    API-->>NG: 200 OK {id, titre, ...}
+    NG->>U: Affiche "Formation créée avec succès"
+```
+
+---
+
+## 14. CORS et Communication Frontend-Backend
+
+La configuration CORS dans `SecurityConfig` autorise :
+- **Origine autorisée** : `http://localhost:4200` uniquement
+- **Méthodes** : GET, POST, PUT, DELETE, OPTIONS
+- **En-têtes** : Tous (`*`)
+- **Credentials** : Activés
+
+Chaque contrôleur a aussi `@CrossOrigin(origins = "http://localhost:4200")` pour le double niveau de protection.
+
+---
+
+## 15. Comment Lancer le Projet
+
+### Étape 1 — Base de données
+```sql
+-- Dans MySQL Workbench ou ligne de commande :
+source database/schema.sql
+```
+
+### Étape 2 — Backend (Spring Boot)
+```bash
+cd backend
+mvn spring-boot:run
+# Accessible sur http://localhost:8080
+```
+
+### Étape 3 — Frontend (Angular)
+```bash
+cd frontend
+npm install
+ng serve
+# Accessible sur http://localhost:4200
+```
+
+### Comptes de test prêts à l'emploi
+| Login | Mot de passe | Rôle |
+|-------|-------------|------|
+| `admin` | `admin123` | ADMIN — accès total |
+| `responsable` | `admin123` | RESPONSABLE — lecture seule |
+| `utilisateur` | `admin123` | UTILISATEUR — CRUD formations |
+
+---
+
+## 16. Points Techniques Importants à Retenir
+
+> [!IMPORTANT]
+> **JWT Stateless** : L'authentification est entièrement sans session (stateless). Le serveur ne stocke aucune session — tout se passe via le token JWT envoyé à chaque requête.
+
+> [!NOTE]
+> **BCrypt** : Les mots de passe sont hashés avec BCrypt avant stockage. Il est impossible de retrouver le mot de passe original depuis la base de données.
+
+> [!TIP]
+> **Lombok** : Les entités JPA utilisent `@Data` (génère getters/setters/equals/hashCode) et `@NoArgsConstructor` (constructeur vide requis par JPA). Cela réduit massivement le code boilerplate.
+
+> [!NOTE]
+> **@Transient** : Le champ `createdByLogin` dans `Formation` n'est pas stocké en base de données — il est calculé dynamiquement à chaque requête dans `FormationService.populateLogin()`.
+
+> [!WARNING]
+> **FK Checks** : Pour supprimer un utilisateur, le service désactive temporairement les contraintes de clé étrangère (`SET FOREIGN_KEY_CHECKS=0`) en MySQL, puis les réactive après suppression. C'est une approche à risque en production.
