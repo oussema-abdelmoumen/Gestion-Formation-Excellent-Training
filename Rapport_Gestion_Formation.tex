@@ -1387,13 +1387,6 @@ ng serve
 
 \section{Page d'Accueil (Landing Page)}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{img_landing.png}
-\caption{Page d'accueil publique --- Dark mode avec cartes anim\'{e}es et bouton Connexion}
-\label{fig:landing}
-\end{figure}
-
 \begin{infobox}{Description de la page d'accueil}
 La landing page pr\'{e}sente le centre Excellent Training avec un design dark moderne. Elle comprend un hero anim\'{e} avec des statistiques (100+ formations, 3 niveaux d'acc\`{e}s, 500+ participants, 24/7), des cartes flottantes simulant l'activit\'{e}, et un bouton Connexion. Un toggle dark/light mode est disponible en haut \`{a} droite.
 \end{infobox}
@@ -1402,21 +1395,11 @@ La landing page pr\'{e}sente le centre Excellent Training avec un design dark mo
 
 \subsection{Page de Connexion}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.75\textwidth]{img_login.png}
-\caption{Page de connexion --- Formulaire s\'{e}curis\'{e} avec JWT}
-\label{fig:login}
-\end{figure}
+La page de connexion utilise un formulaire s\'{e}curis\'{e} avec JWT. L'utilisateur saisit son identifiant et mot de passe, le backend v\'{e}rifie via BCrypt et retourne un token JWT.
 
 \subsection{Page d'Inscription avec CAPTCHA}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.75\textwidth]{img_register.png}
-\caption{Page d'inscription --- Validation en temps r\'{e}el, barre de force, Google reCAPTCHA v2}
-\label{fig:register}
-\end{figure}
+La page d'inscription comprend une validation en temps r\'{e}el, une barre de force du mot de passe et l'int\'{e}gration de Google reCAPTCHA v2.
 
 \begin{notebox}{Fonctionnalit\'{e}s de la page d'inscription}
 \begin{itemize}
@@ -1430,12 +1413,7 @@ La landing page pr\'{e}sente le centre Excellent Training avec un design dark mo
 
 \subsection{Email de V\'{e}rification}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.85\textwidth]{img_email.png}
-\caption{Email HTML de v\'{e}rification re\c{c}u dans la bo\^{\i}te Gmail}
-\label{fig:email}
-\end{figure}
+L'email de v\'{e}rification est envoy\'{e} avec un design HTML coh\'{e}rent au th\`{e}me de l'application.
 
 L'email est envoy\'{e} via \textbf{Gmail SMTP} (JavaMail + Spring Boot Starter Mail) avec un design HTML coh\'{e}rent au th\`{e}me de l'application. Il contient un lien de v\'{e}rification unique (UUID) expirant dans 24 heures.
 
@@ -1446,16 +1424,30 @@ L'email est envoy\'{e} via \textbf{Gmail SMTP} (JavaMail + Spring Boot Starter M
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{img_dashboard1.png}
-\caption{Dashboard Admin --- Onglet Vue d'ensemble : 4 cartes de statistiques, filtrage par ann\'{e}e, camembert par domaine, top 5 formations, participants les plus actifs et formateurs}
+\includegraphics[width=\textwidth]{screenshots/img_dashboard_vue.png}
+\caption{Dashboard Admin --- Onglet Vue d'ensemble : 4 cartes KPI (16 formations, 59900 DT, 8 formateurs, 84 jours), camembert par domaine, top 5 formations, participants les plus actifs et formateurs}
 \label{fig:dash1}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{img_dashboard2.png}
-\caption{Dashboard Admin --- Onglet Gouvernance \& Budget : courbe d'\'{e}volution du budget avec zoom interactif et barres par domaine}
+\includegraphics[width=\textwidth]{screenshots/img_dashboard_budget.png}
+\caption{Dashboard Admin --- Onglet Gouvernance \& Budget : courbe d'\'{e}volution du budget par ann\'{e}e avec zoom interactif et barres par domaine}
 \label{fig:dash2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/img_dashboard_budget_zoom.png}
+\caption{Dashboard --- Zoom interactif sur le budget 2024 : d\'{e}tail par formation avec barres verticales}
+\label{fig:dash_budget_zoom}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/img_dashboard_evolution.png}
+\caption{Dashboard --- \'{E}volution des formations par ann\'{e}e avec zoom sur le d\'{e}tail par date (2024)}
+\label{fig:dash_evolution}
 \end{figure}
 
 \begin{infobox}{Fonctionnalit\'{e}s du tableau de bord avanc\'{e}}
@@ -1471,29 +1463,26 @@ L'email est envoy\'{e} via \textbf{Gmail SMTP} (JavaMail + Spring Boot Starter M
 
 \subsection{Barre de Navigation Admin}
 
+La barre de navigation Admin comprend : Dashboard, Formations, Participants, Formateurs, menu Admin (en or) avec sous-menus : Domaines, Profils, Structures, Employeurs, Utilisateurs. Un toggle dark/light mode et les informations de l'utilisateur connect\'{e} sont affich\'{e}s \`{a} droite.
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{img_navbar.png}
-\caption{Navbar Admin --- Dashboard, Formations, Participants, Formateurs, menu Admin (en or)}
-\label{fig:navbar}
+\includegraphics[width=\textwidth]{screenshots/img_dashboard_participants_formateurs.png}
+\caption{Dashboard --- Onglet Participants \& Formateurs : courbe participants par ann\'{e}e et barres formations par formateur}
+\label{fig:dash_part_form}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.3\textwidth]{img_adminmenu.png}
-\caption{Menu d\'{e}roulant Admin --- Domaines, Profils, Structures, Employeurs, Utilisateurs}
-\label{fig:adminmenu}
+\includegraphics[width=\textwidth]{screenshots/img_dashboard_participants_zoom.png}
+\caption{Dashboard --- Zoom participants par formation (2024) et d\'{e}tail formations par formateur}
+\label{fig:dash_part_zoom}
 \end{figure}
 
 \clearpage
 \section{Dashboard Responsable}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=\textwidth]{img_responsable.png}
-\caption{Dashboard Responsable --- M\^{e}mes statistiques que l'Admin, sans menu de gestion des comptes}
-\label{fig:responsable}
-\end{figure}
+Le Responsable acc\`{e}de au m\^{e}me dashboard que l'Admin (statistiques, graphiques) mais sans le menu \textbf{Admin} en or dans la navbar.
 
 \begin{notebox}{Diff\'{e}rence Admin vs Responsable}
 Le Responsable voit le m\^{e}me dashboard que l'Admin (statistiques, graphiques) mais sans le menu \textbf{Admin} en or dans la navbar. Il n'a pas acc\`{e}s \`{a} la gestion des utilisateurs, domaines, structures, profils et employeurs.
@@ -1501,11 +1490,44 @@ Le Responsable voit le m\^{e}me dashboard que l'Admin (statistiques, graphiques)
 
 \section{Interface Utilisateur Simple}
 
+L'interface Utilisateur simple offre un acc\`{e}s limit\'{e} : ``Mes Formations'' (lecture seule), Formateurs et Participants. Pas de Dashboard ni de menu Admin.
+
+\clearpage
+\section{Anciennes Captures --- Formations, Participants, Formateurs}
+
 \begin{figure}[H]
 \centering
-\includegraphics[width=\textwidth]{img_utilisateur.png}
-\caption{Interface Utilisateur --- "Mes Formations" (lecture seule), Formateurs, Participants. Pas de Dashboard.}
-\label{fig:utilisateur}
+\includegraphics[width=\textwidth]{screenshots/img_formations_table_old.png}
+\caption{Page Formations --- Tableau avec colonnes Titre, Ann\'{e}e, Dur\'{e}e, Budget, Domaine, Lieu, Date, Formateur, Participants, D\'{e}pos\'{e} par, Actions}
+\label{fig:formations_old}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/img_participants_table_old.png}
+\caption{Page Participants --- Tableau avec colonnes Nom, Pr\'{e}nom, Email, T\'{e}l, Structure, Profil, Formations (badge vert cliquable), Actions}
+\label{fig:participants_old}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/img_formateurs_table_old.png}
+\caption{Page Formateurs --- Tableau avec colonnes Nom, Pr\'{e}nom, Email, T\'{e}l, Type, Employeur, Actions}
+\label{fig:formateurs_old}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/img_formation_detail_old.png}
+\caption{D\'{e}tail inline d'une formation --- Informations compl\`{e}tes avec participants, boutons Fermer et Modifier}
+\label{fig:formation_detail_old}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/img_participant_formations_old.png}
+\caption{Formations d'un participant (Amina Jaziri) --- 4 formations affich\'{e}es inline sous la ligne}
+\label{fig:participant_formations_old}
 \end{figure}
 
 \begin{successbox}{Contr\^{o}le d'acc\`{e}s c\^{o}t\'{e} interface}
