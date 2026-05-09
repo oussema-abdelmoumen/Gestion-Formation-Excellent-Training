@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { trigger, state, style, transition, animate } from '@angular/animations';
@@ -116,11 +116,14 @@ export class ParticipantsComponent implements OnInit {
 
   toggleDetail(id: number) { this.expandedId = this.expandedId === id ? null : id; }
 
+  @ViewChild('formCard') formCard!: ElementRef;
+
   openForm(item?: Participant) {
     if (this.isReadOnly) return;
     this.showForm = true; this.editing = !!item; this.formErrors = {};
     this.expandedId = null;
     this.current = item ? { ...item } : this.empty();
+    setTimeout(() => this.formCard?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   }
   cancel() { this.showForm = false; this.formErrors = {}; }
   compareById(a: any, b: any): boolean { return a && b ? a.id === b.id : a === b; }

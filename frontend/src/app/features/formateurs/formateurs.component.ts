@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { FormateurService } from '../../core/services/formateur.service';
@@ -106,10 +106,13 @@ export class FormateursComponent implements OnInit {
     );
   }
 
+  @ViewChild('formCard') formCard!: ElementRef;
+
   openForm(item?: Formateur) {
     if (this.isReadOnly) return;
     this.showForm = true; this.editing = !!item; this.formErrors = {};
     this.current = item ? { ...item } : this.empty();
+    setTimeout(() => this.formCard?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   }
   cancel() { this.showForm = false; this.formErrors = {}; }
   compareById(a: any, b: any): boolean { return a && b ? a.id === b.id : a === b; }

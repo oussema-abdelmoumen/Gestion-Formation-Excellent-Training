@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
 import { trigger, state, style, transition, animate } from '@angular/animations';
@@ -130,6 +130,9 @@ export class FormationsComponent implements OnInit {
     this.filtered = res;
   }
 
+  // Reference to the form card for auto-scroll
+  @ViewChild('formCard') formCard!: ElementRef;
+
   openForm(item?: Formation) {
     if (!this.canCRUD) return;
     this.showForm = true; this.showDetail = false; this.editing = !!item; this.formErrors = {};
@@ -138,6 +141,7 @@ export class FormationsComponent implements OnInit {
     this.current = item
       ? { ...item, participants: item.participants ? [...item.participants] : [] }
       : this.empty();
+    setTimeout(() => this.formCard?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
   }
 
   cancel() { this.showForm = false; this.showDetail = false; this.formErrors = {}; }

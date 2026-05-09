@@ -110,7 +110,7 @@
   </mat-card>
 
   <!-- FORM (RESPONSABLE + ADMIN) -->
-  <mat-card *ngIf="showForm && canCRUD" class="form-card">
+  <mat-card #formCard *ngIf="showForm && canCRUD" class="form-card">
     <mat-card-title>{{ editing ? '✏️ Modifier' : '➕ Créer' }} une Formation</mat-card-title>
     <mat-card-content style="padding-top:20px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">

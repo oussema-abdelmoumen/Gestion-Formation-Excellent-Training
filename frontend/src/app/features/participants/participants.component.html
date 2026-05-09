@@ -38,7 +38,7 @@
   </mat-card>
 
   <!-- FORM -->
-  <mat-card *ngIf="showForm && !isReadOnly" class="form-card">
+  <mat-card #formCard *ngIf="showForm && !isReadOnly" class="form-card">
     <mat-card-title>{{ editing ? '✏️ Modifier' : '➕ Ajouter' }} un Participant</mat-card-title>
     <mat-card-content style="padding-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
 
