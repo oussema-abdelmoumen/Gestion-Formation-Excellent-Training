@@ -1518,6 +1518,78 @@ Le Responsable voit le m\^{e}me dashboard que l'Admin (statistiques, graphiques)
 \end{itemize}
 \end{successbox}
 
+\clearpage
+\section{Gestion des Formations (Dark Mode)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/formations_table.png}
+\caption{Page Formations en dark mode --- Tableau complet avec colonnes Titre, Ann\'{e}e, Dur\'{e}e, Budget, Domaine, Lieu, Date, Formateur, Participants, D\'{e}pos\'{e} par et Actions}
+\label{fig:formations_table}
+\end{figure}
+
+\subsection{D\'{e}tail Inline d'une Formation}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/formation_detail.png}
+\caption{D\'{e}tail inline d'une formation --- Le panneau se d\'{e}ploie directement sous la ligne cliqu\'{e}e avec animation smooth (250ms)}
+\label{fig:formation_detail}
+\end{figure}
+
+\begin{infobox}{Am\'{e}lioration UX : D\'{e}tail Inline}
+Lors du clic sur l'ic\^{o}ne \textbf{Voir} (oeil), les informations d\'{e}taill\'{e}es de la formation s'affichent directement sous la ligne du tableau via la fonctionnalit\'{e} \texttt{multiTemplateDataRows} d'Angular Material. Cette approche \'{e}vite le d\'{e}filement vers le haut de la page et offre une exp\'{e}rience utilisateur fluide. Le panneau affiche : ann\'{e}e, dur\'{e}e, budget, domaine, lieu, date, formateur, d\'{e}pos\'{e} par, et la liste des participants sous forme de chips cliquables.
+\end{infobox}
+
+\clearpage
+\section{Gestion des Participants (Dark Mode)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/participants_table.png}
+\caption{Page Participants en dark mode --- Tableau avec colonnes Nom, Pr\'{e}nom, Email, T\'{e}l, Structure, Profil, Formations et Actions}
+\label{fig:participants_table}
+\end{figure}
+
+\subsection{Formations d'un Participant (Inline)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/participant_formations.png}
+\caption{Formations du participant Mohamed Benali --- 6 formations affich\'{e}es dans des cartes inline sous la ligne cliqu\'{e}e}
+\label{fig:participant_formations}
+\end{figure}
+
+\begin{infobox}{Formations associ\'{e}es \`{a} un participant}
+En cliquant sur le badge vert \textbf{Formations} d'un participant, un panneau inline s'ouvre sous la ligne avec toutes les formations auxquelles ce participant est inscrit. Chaque formation est affich\'{e}e dans une carte avec : titre, ann\'{e}e, domaine, lieu, date, dur\'{e}e et formateur. L'animation \texttt{@detailExpand} assure une transition fluide.
+\end{infobox}
+
+\clearpage
+\section{Gestion des Formateurs (Dark Mode)}
+
+\subsection{Formations d'un Formateur (Nouvelle Fonctionnalit\'{e})}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/formateurs_formations.png}
+\caption{Formateurs avec colonne Formations --- Le formateur Nabil Chaabane dispense 4 formations, affich\'{e}es inline sous sa ligne}
+\label{fig:formateurs_formations}
+\end{figure}
+
+\begin{successbox}{Nouvelle fonctionnalit\'{e} : Formations par formateur}
+Une nouvelle colonne \textbf{Formations} a \'{e}t\'{e} ajout\'{e}e au tableau des formateurs. Elle affiche un badge dor\'{e} avec le nombre de formations dispens\'{e}es. Au clic, un panneau inline s'ouvre montrant les d\'{e}tails de chaque formation (titre, ann\'{e}e, domaine, lieu, date, dur\'{e}e, nombre de participants). Cette fonctionnalit\'{e} exploite le m\^{e}me m\'{e}canisme \texttt{multiTemplateDataRows} utilis\'{e} pour les formations et les participants.
+\end{successbox}
+
+\clearpage
+\section{Dashboard Avanc\'{e} (Dark Mode)}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{screenshots/dashboard.png}
+\caption{Dashboard Admin en dark mode --- Vue d'ensemble avec 4 cartes KPI, camembert par domaine, Top 5 formations, participants actifs et formations par formateur}
+\label{fig:dashboard_dark}
+\end{figure}
+
 % ??????????????????????????????????????????????????????
 \chapter{Conclusion}
 % ??????????????????????????????????????????????????????
@@ -1534,6 +1606,8 @@ Ce projet a permis de r\'{e}aliser une application web compl\`{e}te r\'{e}pondan
   \item \textbf{Import/Export Excel} : import en masse de formations, participants et formateurs avec cr\'{e}ation automatique des entit\'{e}s li\'{e}es ; export format\'{e} via Apache POI
   \item \textbf{Suppression en lot} : multi-s\'{e}lection avec checkboxes pour suppression group\'{e}e de participants et formateurs
   \item \textbf{Dashboard avanc\'{e}} : 3 onglets (Vue d'ensemble, Gouvernance \& Budget, Participants \& Formateurs) avec filtrage par ann\'{e}e, zoom interactif sur les courbes, top 5 participants les plus actifs et top formateurs
+  \item \textbf{D\'{e}tail inline (multiTemplateDataRows)} : les informations d\'{e}taill\'{e}es des formations, participants et formateurs s'affichent directement sous la ligne cliqu\'{e}e, sans d\'{e}filement de page, avec animation smooth
+  \item \textbf{Formations par formateur} : nouvelle colonne affichant les formations dispens\'{e}es par chaque formateur avec expansion inline
   \item \textbf{Recherche en temps r\'{e}el} : filtrage instantan\'{e} sur tous les champs dans les pages formations, participants et formateurs
   \item Design moderne avec \textbf{dark/light mode} et animations CSS
   \item Int\'{e}gration de \textbf{reCAPTCHA v2} et \textbf{v\'{e}rification email} via Gmail SMTP
