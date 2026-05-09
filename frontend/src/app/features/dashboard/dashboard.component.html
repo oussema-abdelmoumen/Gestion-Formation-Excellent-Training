@@ -1,71 +1,229 @@
 <div class="page-content">
 
-  <!-- Welcome banner -->
-  <div class="welcome-banner">
-    <div class="welcome-text">
-      <h2>Bienvenue, {{ login }} 👋</h2>
-      <p>Centre de Formation Excellent Training — {{ auth.getRole() }}</p>
+  <!-- ═══ TOP BAR: STATS CARDS ═══ -->
+  <div class="stats-bar">
+    <div class="stat-item" (click)="navigate('formations')">
+      <div class="stat-icon" style="background:rgba(0,180,216,.12)"><mat-icon style="color:#00b4d8">menu_book</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-label">FORMATIONS</span>
+        <span class="stat-value">{{ totalFormations }}</span>
+      </div>
     </div>
-    <div class="welcome-icon"><mat-icon>insights</mat-icon></div>
+    <div class="stat-divider"></div>
+    <div class="stat-item" (click)="navigate('participants')">
+      <div class="stat-icon" style="background:rgba(255,214,10,.12)"><mat-icon style="color:#ffd60a">groups</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-label">BUDGET TOTAL</span>
+        <span class="stat-value">{{ totalBudget | number }} DT</span>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item" (click)="navigate('formateurs')">
+      <div class="stat-icon" style="background:rgba(0,230,118,.12)"><mat-icon style="color:#00e676">person_pin</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-label">FORMATEURS</span>
+        <span class="stat-value">{{ totalFormateurs }}</span>
+      </div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+      <div class="stat-icon" style="background:rgba(124,77,255,.12)"><mat-icon style="color:#7c4dff">schedule</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-label">JOURS FORMATION</span>
+        <span class="stat-value">{{ totalJours }}</span>
+      </div>
+    </div>
   </div>
 
-  <!-- STATS -->
-  <div class="stats-row">
-    <mat-card class="stat-card" (click)="navigate('formations')" style="cursor:pointer">
-      <mat-icon style="color:#00b4d8">menu_book</mat-icon>
-      <h2>{{ totalFormations }}</h2>
-      <p>Formations</p>
-    </mat-card>
-    <mat-card class="stat-card" (click)="navigate('participants')" style="cursor:pointer">
-      <mat-icon style="color:#ffd60a">groups</mat-icon>
-      <h2>{{ totalParticipants }}</h2>
-      <p>Participants</p>
-    </mat-card>
-    <mat-card class="stat-card" (click)="navigate('formateurs')" style="cursor:pointer">
-      <mat-icon style="color:#00e676">person_pin</mat-icon>
-      <h2>{{ totalFormateurs }}</h2>
-      <p>Formateurs</p>
-    </mat-card>
-    <mat-card class="stat-card" (click)="navigate('domaines')" style="cursor:pointer">
-      <mat-icon style="color:#7c4dff">category</mat-icon>
-      <h2>{{ totalDomaines }}</h2>
-      <p>Domaines</p>
-    </mat-card>
+  <!-- ═══ TABS ═══ -->
+  <div class="tab-bar">
+    <button class="tab" [class.active]="activeTab==='overview'" (click)="activeTab='overview'">
+      <mat-icon>dashboard</mat-icon> Vue d'ensemble
+    </button>
+    <button class="tab" [class.active]="activeTab==='budget'" (click)="activeTab='budget'">
+      <mat-icon>account_balance</mat-icon> Gouvernance & Budget
+    </button>
+    <button class="tab" [class.active]="activeTab==='participants'" (click)="activeTab='participants'">
+      <mat-icon>groups</mat-icon> Participants & Formateurs
+    </button>
   </div>
 
-  <!-- CHARTS -->
-  <div class="charts-grid">
-    <mat-card class="chart-card">
-      <mat-card-title><mat-icon>bar_chart</mat-icon> Formations par Domaine</mat-card-title>
-      <mat-card-content style="margin-top:16px">
-        <canvas baseChart [data]="domaineChartData" [options]="chartOptions" type="bar" style="max-height:260px"></canvas>
-      </mat-card-content>
-    </mat-card>
+  <!-- ═══ YEAR FILTER ═══ -->
+  <div class="year-filter-bar">
+    <div class="filter-label"><mat-icon>filter_alt</mat-icon> Année :</div>
+    <div class="year-chips">
+      <button class="year-chip" [class.active]="selectedYear === null" (click)="clearYearFilter()">Toutes</button>
+      <button *ngFor="let y of availableYears" class="year-chip"
+              [class.active]="selectedYear === y"
+              (click)="selectedYear = y; onYearFilterChange()">{{ y }}</button>
+    </div>
+  </div>
 
-    <mat-card class="chart-card">
-      <mat-card-title><mat-icon>show_chart</mat-icon> Évolution par Année</mat-card-title>
-      <mat-card-content style="margin-top:16px">
-        <canvas baseChart [data]="anneeChartData" [options]="chartOptions" type="line" style="max-height:260px"></canvas>
-      </mat-card-content>
-    </mat-card>
+  <!-- ═══════════ TAB: VUE D'ENSEMBLE ═══════════ -->
+  <div *ngIf="activeTab==='overview'">
 
-    <mat-card class="chart-card">
-      <mat-card-title><mat-icon>pie_chart</mat-icon> Budget par Domaine (DT)</mat-card-title>
-      <mat-card-content style="margin-top:16px">
-        <canvas baseChart [data]="budgetChartData" [options]="chartOptions" type="doughnut" style="max-height:260px"></canvas>
-      </mat-card-content>
-    </mat-card>
-
-    <mat-card class="chart-card" style="display:flex;flex-direction:column">
-      <mat-card-title><mat-icon>summarize</mat-icon> Résumé</mat-card-title>
-      <mat-card-content style="margin-top:16px;flex:1">
-        <div *ngFor="let item of summaryItems"
-             style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)">
-          <span style="color:#8899aa;font-size:.88rem">{{ item.label }}</span>
-          <span style="color:#00e5ff;font-weight:700;font-family:'Josefin Sans',sans-serif">{{ item.value }}</span>
+    <!-- Row 1: Pie + Top Lists -->
+    <div class="row-3">
+      <!-- Formations par domaine (PIE + legend) -->
+      <div class="card card-pie">
+        <div class="card-header">
+          <h3>Formations par domaine</h3>
+          <span class="card-subtitle" *ngIf="selectedYear">{{ selectedYear }}</span>
         </div>
-      </mat-card-content>
-    </mat-card>
+        <div class="pie-layout">
+          <div class="pie-chart-wrap">
+            <canvas baseChart [data]="domainePieData" [options]="pieChartOptions" type="pie"></canvas>
+          </div>
+          <div class="pie-legend">
+            <div *ngFor="let d of domaineList" class="legend-item">
+              <span class="legend-dot" [style.background]="d.color"></span>
+              <span class="legend-name">{{ d.nom }}</span>
+              <span class="legend-pct">{{ d.pct }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top 5 formations les plus suivies -->
+      <div class="card card-list">
+        <div class="card-header"><h3>Top 5 formations les plus suivies</h3></div>
+        <div class="top-list">
+          <div *ngFor="let f of topFormations; let i = index" class="top-item">
+            <span class="top-rank">{{ i + 1 }}</span>
+            <span class="top-name">{{ f.titre }}</span>
+            <span class="top-count">{{ f.count }}</span>
+          </div>
+          <div *ngIf="topFormations.length === 0" class="empty-list">Aucune donnée</div>
+        </div>
+      </div>
+
+      <!-- Participants actifs + formateurs -->
+      <div class="card card-list">
+        <div class="card-header"><h3>🏆 Participants les plus actifs</h3></div>
+        <div class="top-list">
+          <div *ngFor="let p of topParticipants; let i = index" class="top-item">
+            <span class="top-rank">{{ i + 1 }}</span>
+            <span class="top-name">{{ p.nom }}</span>
+            <span class="top-count">{{ p.count }} <small style="color:#556677;font-weight:400">formations</small></span>
+          </div>
+          <div *ngIf="topParticipants.length === 0" class="empty-list">Aucune donnée</div>
+        </div>
+
+        <div class="card-header" style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.06)">
+          <h3>Formations par formateur</h3>
+          <span class="card-link" (click)="activeTab='participants'">Voir tout</span>
+        </div>
+        <div class="top-list">
+          <div *ngFor="let f of topFormateurs; let i = index" class="top-item formateur-item">
+            <span class="top-rank" style="background:rgba(255,214,10,.1);color:#ffd60a">{{ i + 1 }}</span>
+            <span class="top-name">{{ f.nom }}</span>
+            <span class="top-count">{{ f.count }}</span>
+          </div>
+          <div *ngIf="topFormateurs.length === 0" class="empty-list">Aucune donnée</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Évolution des formations (BIG smooth area chart) -->
+    <div class="card card-wide">
+      <div class="card-header">
+        <h3>Évolution des formations par année</h3>
+        <span class="click-hint" *ngIf="!isZoomed">🔍 Cliquer un point pour voir le détail par date</span>
+      </div>
+      <div class="chart-area-wrap">
+        <canvas baseChart [data]="evolutionChartData" [options]="areaChartOptions" type="line"
+                (chartClick)="onEvolutionClick($event)"></canvas>
+      </div>
+    </div>
+
+    <!-- ZOOM PANEL -->
+    <div class="card card-wide zoom-card" *ngIf="isZoomed">
+      <div class="card-header">
+        <button class="zoom-back" (click)="zoomOut()"><mat-icon>arrow_back</mat-icon></button>
+        <h3><mat-icon>zoom_in</mat-icon> Détail par date — {{ zoomedYear }}</h3>
+      </div>
+      <div class="chart-area-wrap">
+        <canvas baseChart [data]="dateZoomChartData" [options]="zoomChartOptions" type="bar"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ TAB: GOUVERNANCE & BUDGET ═══════════ -->
+  <div *ngIf="activeTab==='budget'">
+    <div class="section-tag budget-tag">💰 ANALYSE BUDGET</div>
+
+    <div class="row-2">
+      <div class="card">
+        <div class="card-header">
+          <h3>Évolution du Budget par Année</h3>
+          <span class="click-hint" *ngIf="!budgetZoomed">🔍 Cliquer un point pour voir le détail</span>
+        </div>
+        <div class="chart-area-wrap">
+          <canvas baseChart [data]="budgetAnneeChartData" [options]="areaChartOptions" type="line"
+                  (chartClick)="onBudgetClick($event)"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Budget par Domaine de Formation</h3>
+          <span class="card-subtitle" *ngIf="selectedYear">{{ selectedYear }}</span>
+        </div>
+        <div class="chart-area-wrap">
+          <canvas baseChart [data]="budgetDomaineBarData" [options]="barChartOptions" type="bar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- BUDGET ZOOM PANEL -->
+    <div class="card card-wide zoom-card" *ngIf="budgetZoomed" style="border-color:rgba(255,214,10,.3)!important;">
+      <div class="card-header">
+        <button class="zoom-back" style="border-color:rgba(255,214,10,.3);color:#ffd60a;" (click)="budgetZoomOut()"><mat-icon>arrow_back</mat-icon></button>
+        <h3><mat-icon style="color:#ffd60a">zoom_in</mat-icon> Budget par formation — {{ budgetZoomedYear }}</h3>
+      </div>
+      <div class="chart-area-wrap">
+        <canvas baseChart [data]="budgetZoomChartData" [options]="zoomChartOptions" type="bar"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ TAB: PARTICIPANTS & FORMATEURS ═══════════ -->
+  <div *ngIf="activeTab==='participants'">
+    <div class="section-tag participants-tag">👥 PARTICIPANTS & FORMATEURS</div>
+
+    <div class="row-2">
+      <div class="card">
+        <div class="card-header">
+          <h3>Nombre de Participants par Année</h3>
+          <span class="click-hint" *ngIf="!participantsZoomed">🔍 Cliquer un point pour voir le détail</span>
+        </div>
+        <div class="chart-area-wrap">
+          <canvas baseChart [data]="participantsAnneeChartData" [options]="areaChartOptions" type="line"
+                  (chartClick)="onParticipantsClick($event)"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3>Formations par Formateur</h3>
+          <span class="card-subtitle" *ngIf="selectedYear">{{ selectedYear }}</span>
+        </div>
+        <div class="chart-area-wrap">
+          <canvas baseChart [data]="formateurBarData" [options]="barChartOptions" type="bar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- PARTICIPANTS ZOOM PANEL -->
+    <div class="card card-wide zoom-card" *ngIf="participantsZoomed" style="border-color:rgba(0,230,118,.3)!important;">
+      <div class="card-header">
+        <button class="zoom-back" style="border-color:rgba(0,230,118,.3);color:#00e676;" (click)="participantsZoomOut()"><mat-icon>arrow_back</mat-icon></button>
+        <h3><mat-icon style="color:#00e676">zoom_in</mat-icon> Participants par formation — {{ participantsZoomedYear }}</h3>
+      </div>
+      <div class="chart-area-wrap">
+        <canvas baseChart [data]="participantsZoomChartData" [options]="zoomChartOptions" type="bar"></canvas>
+      </div>
+    </div>
   </div>
 
 </div>

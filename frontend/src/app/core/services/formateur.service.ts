@@ -28,4 +28,14 @@ export class FormateurService {
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.api}/${id}`);
   }
+
+  deleteBulk(ids: number[]): Observable<any> {
+    return this.http.post<any>(`${this.api}/delete-bulk`, ids);
+  }
+
+  importExcel(file: File): Observable<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<any>(`${this.api}/import`, formData);
+  }
 }

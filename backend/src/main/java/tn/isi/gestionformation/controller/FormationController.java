@@ -8,6 +8,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
 import java.io.ByteArrayOutputStream;
 import java.util.*;
@@ -47,14 +49,76 @@ public class FormationController {
         return ResponseEntity.noContent().build();
     }
 
+    // ─── Import Excel ───
+    @PreAuthorize("hasAnyRole('ADMIN','UTILISATEUR')")
+    @PostMapping("/import")
+    public ResponseEntity<Map<String, Object>> importExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            if (file.isEmpty()) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Le fichier est vide"));
+            }
+            String filename = file.getOriginalFilename();
+            if (filename == null || !filename.endsWith(".xlsx")) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Le fichier doit être au format .xlsx"));
+            }
+            Map<String, Object> result = service.importFromExcel(file);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Erreur lors de l'import: " + e.getMessage()));
+        }
+    }
+
+    // ─── Stats endpoints (with optional year filter) ───
+
     @GetMapping("/stats/domaine")
-    public Map<String, Long> statsByDomaine() { return service.countByDomaine(); }
+    public Map<String, Long> statsByDomaine(@RequestParam(required = false) Integer annee) {
+        return service.countByDomaine(annee);
+    }
 
     @GetMapping("/stats/annee")
     public Map<Integer, Long> statsByAnnee() { return service.countByAnnee(); }
 
     @GetMapping("/stats/budget")
-    public Map<String, Double> statsBudget() { return service.budgetByDomaine(); }
+    public Map<String, Double> statsBudget(@RequestParam(required = false) Integer annee) {
+        return service.budgetByDomaine(annee);
+    }
+
+    @GetMapping("/stats/formateur")
+    public Map<String, Long> statsByFormateur(@RequestParam(required = false) Integer annee) {
+        return service.countByFormateur(annee);
+    }
+
+    @GetMapping("/stats/budget-annee")
+    public Map<Integer, Double> statsBudgetByAnnee() {
+        return service.budgetByAnnee();
+    }
+
+    @GetMapping("/stats/participants-annee")
+    public Map<Integer, Long> statsParticipantsByAnnee() {
+        return service.participantsByAnnee();
+    }
+
+    @GetMapping("/stats/avg-participants")
+    public Map<String, Double> statsAvgParticipants() {
+        return service.avgParticipantsByDomaine();
+    }
+
+    @GetMapping("/stats/by-date")
+    public Map<String, Long> statsByDate(@RequestParam(required = false) Integer annee) {
+        return service.formationsByDate(annee);
+    }
+
+    @GetMapping("/stats/avg-duree")
+    public Map<String, Double> statsAvgDuree() {
+        return service.avgDureeByDomaine();
+    }
+
+    @GetMapping("/stats/structure")
+    public Map<String, Long> statsByStructure() {
+        return service.countByStructure();
+    }
+
+    // ─── Excel export ───
 
     @GetMapping("/export/excel")
     public ResponseEntity<byte[]> exportExcel() throws Exception {

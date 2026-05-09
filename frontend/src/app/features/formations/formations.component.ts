@@ -21,9 +21,15 @@ export class FormationsComponent implements OnInit {
   searchText = ''; filterDomaine = ''; filterAnnee = '';
   annees: number[] = [];
   exportLoading = false;
+  importLoading = false;
+  importResult: any = null; // stores import result for alert display
 
   current: Formation = this.empty();
   formErrors: any = {};
+
+  // Search inside dropdowns
+  formateurSearch = '';
+  participantSearch = '';
 
   // Role flags
   canCRUD   = false;  // ADMIN + UTILISATEUR : créer/modifier/supprimer
@@ -33,6 +39,30 @@ export class FormationsComponent implements OnInit {
     const base = ['id','titre','annee','duree','budget','domaine','lieu','dateFormation','formateur','participants'];
     const withOwner = !this.auth.isUtilisateur() ? [...base, 'deposePar'] : base;
     return this.canCRUD ? [...withOwner, 'actions'] : [...withOwner, 'detail'];
+  }
+
+  // Filtered lists for dropdowns
+  get filteredFormateurs(): Formateur[] {
+    if (!this.formateurSearch.trim()) return this.formateurs;
+    const s = this.formateurSearch.toLowerCase();
+    return this.formateurs.filter(f =>
+      f.nom.toLowerCase().includes(s) ||
+      f.prenom.toLowerCase().includes(s) ||
+      (f.email || '').toLowerCase().includes(s) ||
+      f.type.toLowerCase().includes(s)
+    );
+  }
+
+  get filteredParticipants(): Participant[] {
+    if (!this.participantSearch.trim()) return this.allParticipants;
+    const s = this.participantSearch.toLowerCase();
+    return this.allParticipants.filter(p =>
+      p.nom.toLowerCase().includes(s) ||
+      p.prenom.toLowerCase().includes(s) ||
+      (p.email || '').toLowerCase().includes(s) ||
+      (p.structure?.libelle || '').toLowerCase().includes(s) ||
+      (p.profil?.libelle || '').toLowerCase().includes(s)
+    );
   }
 
   constructor(
@@ -73,7 +103,15 @@ export class FormationsComponent implements OnInit {
       const s = this.searchText.toLowerCase();
       res = res.filter(f => f.titre.toLowerCase().includes(s)
         || (f.domaine?.libelle||'').toLowerCase().includes(s)
-        || (f.lieu||'').toLowerCase().includes(s));
+        || (f.lieu||'').toLowerCase().includes(s)
+        || (f.formateur ? (f.formateur.prenom + ' ' + f.formateur.nom).toLowerCase().includes(s) : false)
+        || (f.dateFormation||'').toLowerCase().includes(s)
+        || String(f.annee).includes(s)
+        || String(f.duree).includes(s)
+        || String(f.budget || '').includes(s)
+        || (f.participants || []).some(p => (p.prenom + ' ' + p.nom).toLowerCase().includes(s))
+        || (f.createdByLogin || '').toLowerCase().includes(s)
+      );
     }
     if (this.filterDomaine) res = res.filter(f => f.domaine?.id == +this.filterDomaine);
     if (this.filterAnnee)   res = res.filter(f => f.annee == +this.filterAnnee);
@@ -83,6 +121,8 @@ export class FormationsComponent implements OnInit {
   openForm(item?: Formation) {
     if (!this.canCRUD) return;
     this.showForm = true; this.showDetail = false; this.editing = !!item; this.formErrors = {};
+    this.formateurSearch = '';
+    this.participantSearch = '';
     this.current = item
       ? { ...item, participants: item.participants ? [...item.participants] : [] }
       : this.empty();
@@ -94,6 +134,11 @@ export class FormationsComponent implements OnInit {
 
   goToParticipant(p: Participant) {
     this.router.navigate(['/app/participants'], { queryParams: { id: p.id } });
+  }
+
+  // Keep dropdown open when typing in search
+  onSearchKeydown(event: KeyboardEvent) {
+    event.stopPropagation();
   }
 
   validateField(field: string): string {
@@ -122,13 +167,21 @@ export class FormationsComponent implements OnInit {
       case 'domaine':
         if (!v?.id) return 'Le domaine est obligatoire';
         return '';
+      case 'dateFormation':
+        if (v && this.current.annee) {
+          const dateYear = new Date(v).getFullYear();
+          if (dateYear !== this.current.annee) {
+            return 'L\'année de la date (' + dateYear + ') doit correspondre à l\'année sélectionnée (' + this.current.annee + ')';
+          }
+        }
+        return '';
       default: return '';
     }
   }
 
   validateAll(): boolean {
     this.formErrors = {};
-    const fields = ['titre','annee','duree','budget','lieu','domaine'];
+    const fields = ['titre','annee','duree','budget','lieu','domaine','dateFormation'];
     let valid = true;
     fields.forEach(f => {
       const err = this.validateField(f);
@@ -141,6 +194,12 @@ export class FormationsComponent implements OnInit {
     const err = this.validateField(field);
     if (err) this.formErrors[field] = err;
     else delete this.formErrors[field];
+    // Cross-validate date when year changes
+    if (field === 'annee' && this.current.dateFormation) {
+      const dateErr = this.validateField('dateFormation');
+      if (dateErr) this.formErrors['dateFormation'] = dateErr;
+      else delete this.formErrors['dateFormation'];
+    }
   }
 
   save() {
@@ -182,4 +241,40 @@ export class FormationsComponent implements OnInit {
       error: () => { this.exportLoading = false; this.snack.open('❌ Erreur export', 'X', {duration:3000}); }
     });
   }
+
+  // ─── Excel Import ───
+  onImportFile(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.xlsx')) {
+      this.snack.open('❌ Le fichier doit être au format .xlsx', 'X', {duration:3500});
+      return;
+    }
+    this.importLoading = true;
+    this.importResult = null;
+    this.service.importExcel(file).subscribe({
+      next: (result) => {
+        this.importLoading = false;
+        this.importResult = result;
+
+        // Simple snack for quick feedback
+        const msg = `✅ ${result.imported} formation(s) importée(s)`;
+        this.snack.open(msg, 'OK', {duration:4000});
+
+        // Reload data
+        this.load();
+        this.fmtSvc.getAll().subscribe(f => this.formateurs = f);
+        this.parSvc.getAll().subscribe(p => this.allParticipants = p);
+
+        event.target.value = '';
+      },
+      error: (e) => {
+        this.importLoading = false;
+        this.snack.open('❌ ' + (e.error?.error || 'Erreur import'), 'X', {duration:4000});
+        event.target.value = '';
+      }
+    });
+  }
+
+  dismissImportResult() { this.importResult = null; }
 }

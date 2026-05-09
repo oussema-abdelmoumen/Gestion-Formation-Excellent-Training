@@ -69,6 +69,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT,    "/api/participants/**").hasAnyRole("ADMIN","UTILISATEUR")
                 .requestMatchers(HttpMethod.DELETE, "/api/participants/**").hasAnyRole("ADMIN","UTILISATEUR")
 
+                // ── TEMPLATES : accessible to all authenticated users ──
+                .requestMatchers(HttpMethod.GET, "/api/templates/**").authenticated()
+
                 .anyRequest().authenticated()
             )
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

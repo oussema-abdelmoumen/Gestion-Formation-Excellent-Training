@@ -1,10 +1,41 @@
 <div class="page-content">
   <div class="page-header">
     <h1><mat-icon>groups</mat-icon> Gestion des Participants</h1>
-    <button mat-raised-button color="primary" (click)="openForm()" *ngIf="!isReadOnly">
-      <mat-icon>person_add</mat-icon> Nouveau Participant
-    </button>
+    <div class="action-buttons">
+      <!-- Delete selected -->
+      <button mat-raised-button class="btn-delete-bulk" (click)="deleteSelected()" *ngIf="selectedIds.size > 0">
+        <mat-icon>delete_sweep</mat-icon> Supprimer ({{ selectedIds.size }})
+      </button>
+      <!-- Import Excel -->
+      <button mat-raised-button class="btn-import" (click)="fileInput.click()" *ngIf="!isReadOnly" [disabled]="importLoading">
+        <mat-icon>upload_file</mat-icon> {{ importLoading ? 'Import...' : 'Importer Excel' }}
+      </button>
+      <input #fileInput type="file" accept=".xlsx" style="display:none" (change)="onImportFile($event)">
+      <button mat-raised-button color="primary" (click)="openForm()" *ngIf="!isReadOnly">
+        <mat-icon>person_add</mat-icon> Nouveau Participant
+      </button>
+    </div>
   </div>
+
+  <!-- Import hint -->
+  <div class="import-hint" *ngIf="!isReadOnly">
+    <mat-icon>info_outline</mat-icon>
+    Format Excel attendu : <strong>Nom | Prénom | Email | Téléphone | Structure | Profil</strong>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <mat-card style="margin-bottom:20px;padding:16px">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+      <mat-form-field appearance="outline" style="margin:0">
+        <mat-label>Rechercher un participant...</mat-label>
+        <input matInput [(ngModel)]="searchText" (ngModelChange)="applyFilters()">
+        <mat-icon matSuffix>search</mat-icon>
+      </mat-form-field>
+      <button mat-icon-button (click)="searchText='';applyFilters()" matTooltip="Réinitialiser" *ngIf="searchText">
+        <mat-icon>filter_list_off</mat-icon>
+      </button>
+    </div>
+  </mat-card>
 
   <!-- FORM -->
   <mat-card *ngIf="showForm && !isReadOnly" class="form-card">
@@ -80,7 +111,16 @@
   <!-- TABLE -->
   <mat-card>
     <mat-card-content style="padding:0;overflow-x:auto">
-      <table mat-table [dataSource]="items">
+      <table mat-table [dataSource]="filtered">
+
+        <ng-container matColumnDef="select">
+          <th mat-header-cell *matHeaderCellDef style="width:42px">
+            <mat-checkbox [checked]="allSelected" (change)="toggleAll()" color="primary"></mat-checkbox>
+          </th>
+          <td mat-cell *matCellDef="let r" style="width:42px">
+            <mat-checkbox [checked]="isSelected(r.id)" (change)="toggleSelection(r.id)" color="primary"></mat-checkbox>
+          </td>
+        </ng-container>
 
         <ng-container matColumnDef="id">
           <th mat-header-cell *matHeaderCellDef>#</th>
@@ -144,7 +184,7 @@
       </table>
 
       <!-- EXPANDED FORMATIONS PANEL -->
-      <ng-container *ngFor="let p of items">
+      <ng-container *ngFor="let p of filtered">
         <div *ngIf="expandedId === p.id" class="formations-panel">
           <div class="formations-panel-header">
             <mat-icon>school</mat-icon>
@@ -175,8 +215,9 @@
         </div>
       </ng-container>
 
-      <div *ngIf="items.length===0" class="empty-state">
-        <mat-icon>group_off</mat-icon><p>Aucun participant trouvé</p>
+      <div *ngIf="filtered.length===0" class="empty-state">
+        <mat-icon>group_off</mat-icon>
+        <p>{{ searchText ? 'Aucun participant trouvé pour "' + searchText + '"' : 'Aucun participant trouvé' }}</p>
       </div>
     </mat-card-content>
   </mat-card>

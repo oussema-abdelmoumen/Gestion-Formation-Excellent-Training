@@ -7,12 +7,77 @@
       <span *ngIf="auth.isResponsable()" class="role-badge resp">Responsable</span>
     </h1>
     <div class="action-buttons">
+      <!-- Import Excel -->
+      <button mat-raised-button class="btn-import" (click)="importInput.click()" *ngIf="canCRUD" [disabled]="importLoading">
+        <mat-icon>upload_file</mat-icon> {{ importLoading ? 'Import...' : 'Importer Excel' }}
+      </button>
+      <input #importInput type="file" accept=".xlsx" style="display:none" (change)="onImportFile($event)">
       <button mat-raised-button class="btn-excel" (click)="exportExcel()" [disabled]="exportLoading">
         <mat-icon>download</mat-icon> {{ exportLoading ? 'Export...' : 'Excel' }}
       </button>
       <button mat-raised-button color="primary" (click)="openForm()" *ngIf="!auth.isResponsable()">
         <mat-icon>add</mat-icon> Nouvelle Formation
       </button>
+    </div>
+  </div>
+
+  <!-- Import format hint -->
+  <div class="import-hint" *ngIf="canCRUD">
+    <mat-icon>info_outline</mat-icon>
+    Format Excel attendu : <strong>Titre | Année | Durée | Budget | Lieu | Date | Domaine | Formateur Email | Participants Emails</strong>
+  </div>
+
+  <!-- ═══ IMPORT RESULT ALERT ═══ -->
+  <div class="import-alert" *ngIf="importResult">
+    <div class="import-alert-header">
+      <mat-icon>task_alt</mat-icon>
+      <h4>Résultat de l'import : {{ importResult.imported }} formation(s) importée(s)</h4>
+      <button class="alert-close" (click)="dismissImportResult()"><mat-icon>close</mat-icon></button>
+    </div>
+
+    <!-- Auto-created Formateurs -->
+    <div class="alert-section warning" *ngIf="importResult.autoCreatedFormateurs?.length > 0">
+      <div class="alert-section-title">
+        <mat-icon>person_add</mat-icon>
+        ⚠️ {{ importResult.autoCreatedFormateurs.length }} formateur(s) créé(s) automatiquement :
+      </div>
+      <div class="alert-list">
+        <div *ngFor="let f of importResult.autoCreatedFormateurs" class="alert-list-item">
+          <mat-icon>arrow_right</mat-icon> {{ f }}
+        </div>
+      </div>
+      <div class="alert-note">
+        <mat-icon>edit</mat-icon> Pensez à compléter leurs informations dans la page <strong>Formateurs</strong>
+      </div>
+    </div>
+
+    <!-- Auto-created Participants -->
+    <div class="alert-section warning" *ngIf="importResult.autoCreatedParticipants?.length > 0">
+      <div class="alert-section-title">
+        <mat-icon>group_add</mat-icon>
+        ⚠️ {{ importResult.autoCreatedParticipants.length }} participant(s) créé(s) automatiquement :
+      </div>
+      <div class="alert-list">
+        <div *ngFor="let p of importResult.autoCreatedParticipants" class="alert-list-item">
+          <mat-icon>arrow_right</mat-icon> {{ p }}
+        </div>
+      </div>
+      <div class="alert-note">
+        <mat-icon>edit</mat-icon> Pensez à compléter leurs informations dans la page <strong>Participants</strong>
+      </div>
+    </div>
+
+    <!-- Errors -->
+    <div class="alert-section error" *ngIf="importResult.errors?.length > 0">
+      <div class="alert-section-title">
+        <mat-icon>error_outline</mat-icon>
+        ❌ {{ importResult.errors.length }} erreur(s) :
+      </div>
+      <div class="alert-list">
+        <div *ngFor="let e of importResult.errors" class="alert-list-item error-item">
+          <mat-icon>arrow_right</mat-icon> {{ e }}
+        </div>
+      </div>
     </div>
   </div>
 
@@ -116,31 +181,67 @@
         </div>
 
         <!-- Date -->
-        <mat-form-field appearance="outline">
-          <mat-label>Date de formation</mat-label>
-          <input matInput [(ngModel)]="current.dateFormation" type="date">
-          <mat-icon matSuffix>event</mat-icon>
-        </mat-form-field>
+        <div class="vfield" [class.verr]="formErrors.dateFormation">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Date de formation</mat-label>
+            <input matInput [(ngModel)]="current.dateFormation" (blur)="onFieldBlur('dateFormation')" (ngModelChange)="onFieldBlur('dateFormation')" type="date">
+            <mat-icon matSuffix>event</mat-icon>
+          </mat-form-field>
+          <div class="verr-msg" *ngIf="formErrors.dateFormation"><mat-icon>error_outline</mat-icon>{{formErrors.dateFormation}}</div>
+        </div>
 
-        <!-- Formateur -->
+        <!-- Formateur with search -->
         <mat-form-field appearance="outline">
           <mat-label>Formateur</mat-label>
           <mat-select [(ngModel)]="current.formateur" [compareWith]="compareById">
+            <div class="dropdown-search">
+              <mat-icon>search</mat-icon>
+              <input matInput
+                     placeholder="Rechercher un formateur..."
+                     [(ngModel)]="formateurSearch"
+                     (keydown)="onSearchKeydown($event)"
+                     (click)="$event.stopPropagation()"
+                     autocomplete="off">
+              <button *ngIf="formateurSearch" mat-icon-button (click)="formateurSearch=''; $event.stopPropagation()" class="clear-search">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <mat-divider></mat-divider>
             <mat-option [value]="null">— Aucun —</mat-option>
-            <mat-option *ngFor="let f of formateurs" [value]="f">
+            <mat-option *ngFor="let f of filteredFormateurs" [value]="f">
               {{ f.prenom }} {{ f.nom }} ({{ f.type }})
             </mat-option>
+            <div *ngIf="filteredFormateurs.length === 0 && formateurSearch" class="dropdown-no-result">
+              <mat-icon>search_off</mat-icon> Aucun formateur trouvé
+            </div>
           </mat-select>
         </mat-form-field>
 
-        <!-- Participants -->
+        <!-- Participants with search -->
         <mat-form-field appearance="outline" style="grid-column:1/-1">
           <mat-label>Participants</mat-label>
           <mat-select [(ngModel)]="current.participants" multiple [compareWith]="compareById">
-            <mat-option *ngFor="let p of allParticipants" [value]="p">
+            <div class="dropdown-search">
+              <mat-icon>search</mat-icon>
+              <input matInput
+                     placeholder="Rechercher un participant..."
+                     [(ngModel)]="participantSearch"
+                     (keydown)="onSearchKeydown($event)"
+                     (click)="$event.stopPropagation()"
+                     autocomplete="off">
+              <button *ngIf="participantSearch" mat-icon-button (click)="participantSearch=''; $event.stopPropagation()" class="clear-search">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <mat-divider></mat-divider>
+            <mat-option *ngFor="let p of filteredParticipants" [value]="p">
               {{ p.prenom }} {{ p.nom }} — {{ p.structure?.libelle ?? "" }}
             </mat-option>
+            <div *ngIf="filteredParticipants.length === 0 && participantSearch" class="dropdown-no-result">
+              <mat-icon>search_off</mat-icon> Aucun participant trouvé
+            </div>
           </mat-select>
+          <mat-hint>Optionnel — vous pouvez ne pas affecter de participants</mat-hint>
         </mat-form-field>
 
       </div>
@@ -174,6 +275,9 @@
       </div>
       <p style="margin-top:12px">
         <strong>Participants ({{ selectedFormation.participants?.length || 0 }}) :</strong>
+        <span *ngIf="(selectedFormation.participants?.length || 0) < 4" class="warning-text">
+          ⚠️ Moins de 4 participants
+        </span>
         <span *ngIf="!auth.isUtilisateur()" style="font-size:.78rem;color:var(--text-muted);margin-left:8px">
           Cliquer sur un participant pour voir ses infos
         </span>
@@ -243,7 +347,10 @@
         <ng-container matColumnDef="participants">
           <th mat-header-cell *matHeaderCellDef>Participants</th>
           <td mat-cell *matCellDef="let r">
-            <span class="badge-gold">{{ r.participants?.length || 0 }}</span>
+            <span [class]="(r.participants?.length || 0) < 4 ? 'badge-red' : 'badge-gold'"
+                  [matTooltip]="(r.participants?.length || 0) < 4 ? '⚠️ Moins de 4 participants' : ''">
+              {{ r.participants?.length || 0 }}
+            </span>
           </td>
         </ng-container>
 

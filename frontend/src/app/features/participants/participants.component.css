@@ -96,3 +96,28 @@
 }
 .close-panel:hover{background:rgba(255,255,255,.05);color:#e8f1f2;}
 .close-panel mat-icon{font-size:16px;height:16px;width:16px;}
+
+.action-buttons{display:flex;gap:8px;align-items:center;}
+.btn-import{
+  background:rgba(0,230,118,.12)!important;color:#00e676!important;
+  border:1px solid rgba(0,230,118,.3)!important;
+  font-weight:600;
+}
+.btn-import:hover{background:rgba(0,230,118,.2)!important;}
+.import-hint{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 16px;margin-bottom:16px;
+  background:rgba(0,180,216,.06);border:1px solid rgba(0,180,216,.12);
+  border-radius:10px;color:#8899aa;font-size:.8rem;
+}
+.import-hint mat-icon{font-size:18px;height:18px;width:18px;color:#00b4d8;}
+.template-link{color:#00e5ff;text-decoration:none;font-weight:600;transition:opacity .2s;}
+.template-link:hover{opacity:.8;text-decoration:underline;}
+
+/* Bulk delete button */
+.btn-delete-bulk{
+  background:rgba(255,68,68,.15)!important;color:#ff4444!important;
+  border:1px solid rgba(255,68,68,.3)!important;font-weight:600;
+  animation:pulse-red 2s infinite;
+}
+.btn-delete-bulk:hover{background:rgba(255,68,68,.25)!important;}

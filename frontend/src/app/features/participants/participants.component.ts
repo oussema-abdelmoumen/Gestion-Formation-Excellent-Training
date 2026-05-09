@@ -11,6 +11,7 @@ import { Participant, Structure, Profil, Formation } from '../../shared/models';
 @Component({ selector:'app-participants', templateUrl:'./participants.component.html', styleUrls:['./participants.component.css'] })
 export class ParticipantsComponent implements OnInit {
   items: Participant[] = [];
+  filtered: Participant[] = [];
   structures: Structure[] = [];
   profils: Profil[] = [];
   allFormations: Formation[] = [];
@@ -19,15 +20,20 @@ export class ParticipantsComponent implements OnInit {
   editing = false;
   formErrors: any = {};
   isReadOnly = false;  // seulement RESPONSABLE
+  searchText = '';
+  importLoading = false;
 
   expandedId: number | null = null;
   participantFormations: { [id: number]: Formation[] } = {};
 
+  // Multi-select
+  selectedIds = new Set<number>();
+
   current: Participant = this.empty();
 
   get displayedColumns() {
-    const base = ['id','nom','prenom','email','tel','structure','profil','formations'];
-    return this.isReadOnly ? base : [...base, 'actions'];
+    const base = ['select','id','nom','prenom','email','tel','structure','profil','formations'];
+    return this.isReadOnly ? base.filter(c => c !== 'select') : [...base, 'actions'];
   }
 
   constructor(
@@ -60,7 +66,25 @@ export class ParticipantsComponent implements OnInit {
     this.svc.getAll().subscribe(d => {
       this.items = d;
       this.buildParticipantFormations();
+      this.applyFilters();
     });
+  }
+
+  applyFilters() {
+    if (!this.searchText.trim()) {
+      this.filtered = [...this.items];
+      return;
+    }
+    const s = this.searchText.toLowerCase();
+    this.filtered = this.items.filter(p =>
+      p.nom.toLowerCase().includes(s) ||
+      p.prenom.toLowerCase().includes(s) ||
+      (p.email || '').toLowerCase().includes(s) ||
+      (p.tel || '').toLowerCase().includes(s) ||
+      (p.structure?.libelle || '').toLowerCase().includes(s) ||
+      (p.profil?.libelle || '').toLowerCase().includes(s) ||
+      String(p.id || '').includes(s)
+    );
   }
 
   buildParticipantFormations() {
@@ -149,6 +173,68 @@ export class ParticipantsComponent implements OnInit {
     this.svc.delete(id).subscribe({
       next: () => { this.load(); this.snack.open('🗑️ Supprimé', '', {duration:2000}); },
       error: () => this.snack.open('❌ Impossible de supprimer', 'X', {duration:3000})
+    });
+  }
+
+  // ─── Excel Import ───
+  onImportFile(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.xlsx')) {
+      this.snack.open('❌ Le fichier doit être au format .xlsx', 'X', {duration:3500});
+      return;
+    }
+    this.importLoading = true;
+    this.svc.importExcel(file).subscribe({
+      next: (result) => {
+        this.importLoading = false;
+        const msg = `✅ ${result.imported} participant(s) importé(s)`;
+        const errMsg = result.errors?.length ? ` — ${result.errors.length} erreur(s)` : '';
+        this.snack.open(msg + errMsg, 'OK', {duration:5000});
+        if (result.errors?.length) {
+          console.warn('Import errors:', result.errors);
+        }
+        this.load();
+        event.target.value = '';
+      },
+      error: (e) => {
+        this.importLoading = false;
+        this.snack.open('❌ ' + (e.error?.error || 'Erreur import'), 'X', {duration:4000});
+        event.target.value = '';
+      }
+    });
+  }
+
+  // ─── Multi-select ───
+  toggleSelection(id: number) {
+    this.selectedIds.has(id) ? this.selectedIds.delete(id) : this.selectedIds.add(id);
+  }
+
+  isSelected(id: number): boolean { return this.selectedIds.has(id); }
+
+  toggleAll() {
+    if (this.selectedIds.size === this.filtered.length) {
+      this.selectedIds.clear();
+    } else {
+      this.filtered.forEach(p => { if (p.id) this.selectedIds.add(p.id); });
+    }
+  }
+
+  get allSelected(): boolean {
+    return this.filtered.length > 0 && this.selectedIds.size === this.filtered.length;
+  }
+
+  deleteSelected() {
+    if (this.selectedIds.size === 0) return;
+    const count = this.selectedIds.size;
+    if (!confirm(`Supprimer ${count} participant(s) sélectionné(s) ?`)) return;
+    this.svc.deleteBulk([...this.selectedIds]).subscribe({
+      next: (result) => {
+        this.snack.open(`🗑️ ${result.deleted} participant(s) supprimé(s)`, '', {duration:3000});
+        this.selectedIds.clear();
+        this.load();
+      },
+      error: () => this.snack.open('❌ Erreur lors de la suppression', 'X', {duration:3000})
     });
   }
 }

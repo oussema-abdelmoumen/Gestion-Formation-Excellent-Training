@@ -8,15 +8,21 @@ import { Formateur, Employeur } from '../../shared/models';
 @Component({ selector:'app-formateurs', templateUrl:'./formateurs.component.html', styleUrls:['./formateurs.component.css'] })
 export class FormateursComponent implements OnInit {
   items: Formateur[] = [];
+  filtered: Formateur[] = [];
   employeurs: Employeur[] = [];
   showForm = false; editing = false;
   current: Formateur = this.empty();
   formErrors: any = {};
   isReadOnly = false;
+  searchText = '';
+  importLoading = false;
+
+  // Multi-select
+  selectedIds = new Set<number>();
 
   get displayedColumns() {
-    const base = ['id','nom','prenom','email','tel','type','employeur'];
-    return this.isReadOnly ? base : [...base, 'actions'];
+    const base = ['select','id','nom','prenom','email','tel','type','employeur'];
+    return this.isReadOnly ? base.filter(c => c !== 'select') : [...base, 'actions'];
   }
 
   constructor(
@@ -34,7 +40,30 @@ export class FormateursComponent implements OnInit {
   }
 
   empty(): Formateur { return { nom:'', prenom:'', email:'', tel:'', type:'INTERNE' }; }
-  load() { this.svc.getAll().subscribe(d => this.items = d); }
+
+  load() {
+    this.svc.getAll().subscribe(d => {
+      this.items = d;
+      this.applyFilters();
+    });
+  }
+
+  applyFilters() {
+    if (!this.searchText.trim()) {
+      this.filtered = [...this.items];
+      return;
+    }
+    const s = this.searchText.toLowerCase();
+    this.filtered = this.items.filter(f =>
+      f.nom.toLowerCase().includes(s) ||
+      f.prenom.toLowerCase().includes(s) ||
+      (f.email || '').toLowerCase().includes(s) ||
+      (f.tel || '').toLowerCase().includes(s) ||
+      f.type.toLowerCase().includes(s) ||
+      (f.employeur?.nomEmployeur || '').toLowerCase().includes(s) ||
+      String(f.id || '').includes(s)
+    );
+  }
 
   openForm(item?: Formateur) {
     if (this.isReadOnly) return;
@@ -106,6 +135,68 @@ export class FormateursComponent implements OnInit {
     this.svc.delete(id).subscribe({
       next: () => { this.load(); this.snack.open('🗑️ Supprimé', '', {duration:2000}); },
       error: () => this.snack.open('❌ Impossible de supprimer', 'X', {duration:3000})
+    });
+  }
+
+  // ─── Excel Import ───
+  onImportFile(event: any) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.name.endsWith('.xlsx')) {
+      this.snack.open('❌ Le fichier doit être au format .xlsx', 'X', {duration:3500});
+      return;
+    }
+    this.importLoading = true;
+    this.svc.importExcel(file).subscribe({
+      next: (result) => {
+        this.importLoading = false;
+        const msg = `✅ ${result.imported} formateur(s) importé(s)`;
+        const errMsg = result.errors?.length ? ` — ${result.errors.length} erreur(s)` : '';
+        this.snack.open(msg + errMsg, 'OK', {duration:5000});
+        if (result.errors?.length) {
+          console.warn('Import errors:', result.errors);
+        }
+        this.load();
+        event.target.value = '';
+      },
+      error: (e) => {
+        this.importLoading = false;
+        this.snack.open('❌ ' + (e.error?.error || 'Erreur import'), 'X', {duration:4000});
+        event.target.value = '';
+      }
+    });
+  }
+
+  // ─── Multi-select ───
+  toggleSelection(id: number) {
+    this.selectedIds.has(id) ? this.selectedIds.delete(id) : this.selectedIds.add(id);
+  }
+
+  isSelected(id: number): boolean { return this.selectedIds.has(id); }
+
+  toggleAll() {
+    if (this.selectedIds.size === this.filtered.length) {
+      this.selectedIds.clear();
+    } else {
+      this.filtered.forEach(f => { if (f.id) this.selectedIds.add(f.id); });
+    }
+  }
+
+  get allSelected(): boolean {
+    return this.filtered.length > 0 && this.selectedIds.size === this.filtered.length;
+  }
+
+  deleteSelected() {
+    if (this.selectedIds.size === 0) return;
+    const count = this.selectedIds.size;
+    if (!confirm(`Supprimer ${count} formateur(s) sélectionné(s) ?`)) return;
+    this.svc.deleteBulk([...this.selectedIds]).subscribe({
+      next: (result) => {
+        this.snack.open(`🗑️ ${result.deleted} formateur(s) supprimé(s)`, '', {duration:3000});
+        this.selectedIds.clear();
+        this.load();
+      },
+      error: () => this.snack.open('❌ Erreur lors de la suppression', 'X', {duration:3000})
     });
   }
 }

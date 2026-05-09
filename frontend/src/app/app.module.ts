@@ -19,6 +19,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatBadgeModule } from '@angular/material/badge';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { NgChartsModule } from 'ng2-charts';
 
 import { AppRoutingModule } from './app-routing.module';
@@ -55,7 +56,7 @@ import { AccessDeniedComponent } from './features/access-denied/access-denied.co
     MatToolbarModule, MatCardModule, MatInputModule, MatButtonModule,
     MatTableModule, MatSelectModule, MatIconModule, MatMenuModule,
     MatFormFieldModule, MatProgressSpinnerModule, MatSnackBarModule,
-    MatDialogModule, MatTooltipModule, MatChipsModule, MatDividerModule, MatBadgeModule,
+    MatDialogModule, MatTooltipModule, MatChipsModule, MatDividerModule, MatBadgeModule, MatCheckboxModule,
   ],
   providers: [{ provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true }],
   bootstrap: [AppComponent]
