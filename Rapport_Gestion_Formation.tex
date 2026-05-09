@@ -241,12 +241,20 @@ Ce rapport pr\'{e}sente la conception et le d\'{e}veloppement d'une application 
 
 L'application a \'{e}t\'{e} d\'{e}velopp\'{e}e avec une architecture full-stack moderne :
 \begin{itemize}
-  \item \textbf{Backend :} Spring Boot 3.2 (Java 17) avec Spring Security, JWT, JPA/Hibernate, MySQL
-  \item \textbf{Frontend :} Angular 17 avec TypeScript, Angular Material, ng2-charts
+  \item \textbf{Backend :} Spring Boot 3.2 (Java 17) avec Spring Security, JWT, JPA/Hibernate, MySQL, Apache POI
+  \item \textbf{Frontend :} Angular 17 avec TypeScript, Angular Material, ng2-charts (Chart.js)
   \item \textbf{S\'{e}curit\'{e} :} Authentification JWT, BCrypt, reCAPTCHA v2, v\'{e}rification email
 \end{itemize}
 
 \noindent Le projet impl\'{e}mente un syst\`{e}me RBAC (Role-Based Access Control) avec trois r\^{o}les : Administrateur, Responsable et Utilisateur, chacun ayant des permissions distinctes sur les ressources de l'application.
+
+\noindent En plus des fonctionnalit\'{e}s CRUD de base, l'application offre :
+\begin{itemize}
+  \item \textbf{Import Excel :} Importation en masse de formations, participants et formateurs via fichiers \texttt{.xlsx}
+  \item \textbf{Suppression en lot :} S\'{e}lection multiple avec checkboxes pour supprimer plusieurs enregistrements
+  \item \textbf{Dashboard avanc\'{e} :} Trois onglets (Vue d'ensemble, Gouvernance \& Budget, Participants \& Formateurs) avec filtrage par ann\'{e}e, zoom interactif sur les courbes, top participants les plus actifs, et top formateurs
+  \item \textbf{Recherche en temps r\'{e}el :} Filtrage instantan\'{e} sur tous les champs dans toutes les pages
+\end{itemize}
 
 \clearpage
 
@@ -280,10 +288,12 @@ D\'{e}velopper une application web full-stack permettant de centraliser, s\'{e}c
 \begin{itemize}
   \item Centraliser toutes les donn\'{e}es en base de donn\'{e}es MySQL relationnelle
   \item Impl\'{e}menter un syst\`{e}me RBAC avec 3 niveaux d'acc\`{e}s distincts
-  \item Fournir un tableau de bord statistique interactif
+  \item Fournir un tableau de bord statistique interactif avec filtrage par ann\'{e}e et zoom
   \item Assurer la s\'{e}curit\'{e} des donn\'{e}es (JWT, BCrypt, CAPTCHA, v\'{e}rification email)
   \item Offrir une interface moderne avec dark/light mode et contr\^{o}les de saisie rigoureux
-  \item Permettre l'export des donn\'{e}es en fichier Excel
+  \item Permettre l'export et l'import des donn\'{e}es en fichier Excel (\texttt{.xlsx})
+  \item Permettre la suppression en lot (multi-s\'{e}lection) de participants et formateurs
+  \item Impl\'{e}menter une recherche en temps r\'{e}el sur tous les champs
 \end{itemize}
 
 \section{P\'{e}rim\`{e}tre fonctionnel}
@@ -303,11 +313,17 @@ Gestion des participants & CRUD avec affiliation structure/profil et vue des for
 \hline
 Gestion des formateurs & CRUD avec distinction interne/externe \\
 \hline
-Statistiques & Graphiques par domaine, ann\'{e}e, budget \\
+Statistiques & Dashboard 3 onglets avec graphiques interactifs, filtrage par ann\'{e}e et zoom \\
 \hline
 Authentification & Login, inscription, v\'{e}rification email, CAPTCHA \\
 \hline
-Export Excel & Fichier .xlsx avec mise en forme \\
+Export Excel & Fichier .xlsx avec mise en forme pour formations \\
+\hline
+Import Excel & Import en masse de formations, participants et formateurs via .xlsx \\
+\hline
+Suppression en lot & Multi-s\'{e}lection avec checkboxes pour supprimer plusieurs enregistrements \\
+\hline
+Recherche temps r\'{e}el & Filtrage instantan\'{e} sur tous les champs dans toutes les pages \\
 \hline
 Gestion utilisateurs & CRUD comptes (Admin uniquement) \\
 \hline
@@ -413,7 +429,7 @@ Le backend est organis\'{e} en \textbf{4 couches} selon le patron d'architecture
 \hline
 \rowcolor{darkblue} \textcolor{white}{\textbf{Dossier}} & \textcolor{cyan}{\textbf{Contenu et r\^{o}le}} \\
 \hline
-\texttt{core/services/} & AuthService, FormationService, ThemeService --- communication API \\
+\texttt{core/services/} & AuthService, FormationService, ParticipantService, FormateurService, ThemeService --- communication API \\
 \hline
 \texttt{core/guards/} & AuthGuard (connexion requise), RoleGuard (v\'{e}rification du r\^{o}le) \\
 \hline
@@ -423,13 +439,15 @@ Le backend est organis\'{e} en \textbf{4 couches} selon le patron d'architecture
 \hline
 \texttt{features/landing/} & Page d'accueil publique anim\'{e}e \\
 \hline
-\texttt{features/dashboard/} & Tableau de bord statistiques \\
+\texttt{features/dashboard/} & Tableau de bord 3 onglets avec zoom, filtrage ann\'{e}e et stats dynamiques \\
 \hline
-\texttt{features/formations/} & CRUD formations + export Excel \\
+\texttt{features/formations/} & CRUD formations + export/import Excel + recherche temps r\'{e}el \\
 \hline
-\texttt{features/participants/} & CRUD + panel formations associ\'{e}es \\
+\texttt{features/participants/} & CRUD + import Excel + suppression en lot + panel formations \\
 \hline
-\texttt{shared/models/} & Interfaces TypeScript (Formation, Participant\ldots) \\
+\texttt{features/formateurs/} & CRUD + import Excel + suppression en lot \\
+\hline
+\texttt{shared/models/} & Interfaces TypeScript (Formation, Participant, Formateur\ldots) \\
 \hline
 \end{tabularx}
 \end{table}
@@ -805,6 +823,10 @@ CRUD formateurs & \textcolor{green!50!black}{\checkmark} & \textcolor{red}{\text
 \hline
 Export Excel & \textcolor{green!50!black}{\checkmark} & \textcolor{green!50!black}{\checkmark} & \textcolor{red}{\texttimes} \\
 \hline
+Import Excel & \textcolor{green!50!black}{\checkmark} & \textcolor{green!50!black}{\checkmark} & \textcolor{red}{\texttimes} \\
+\hline
+Suppression en lot & \textcolor{green!50!black}{\checkmark} & \textcolor{red}{\texttimes} & \textcolor{green!50!black}{\checkmark} \\
+\hline
 Domaines (lecture) & \textcolor{green!50!black}{\checkmark} & \textcolor{green!50!black}{\checkmark} & \textcolor{green!50!black}{\checkmark} \\
 \hline
 Domaines (\'{e}criture) & \textcolor{green!50!black}{\checkmark} & \textcolor{red}{\texttimes} & \textcolor{red}{\texttimes} \\
@@ -932,6 +954,45 @@ public ResponseEntity<byte[]> exportExcel() throws Exception {
 }
 \end{lstlisting}
 
+\section{Import Excel avec Apache POI}
+
+L'application permet l'import en masse de formations, participants et formateurs via fichiers \texttt{.xlsx}. Le backend parse chaque ligne du fichier Excel et cr\'{e}e automatiquement les entit\'{e}s li\'{e}es (domaine, structure, profil, formateur) si elles n'existent pas encore.
+
+\begin{lstlisting}[language=Java, caption={FormationController.java --- Endpoint d'import Excel}]
+@PostMapping("/import")
+public ResponseEntity<?> importExcel(
+        @RequestParam("file") MultipartFile file) {
+    try {
+        Map<String, Object> result = service.importFromExcel(file);
+        return ResponseEntity.ok(result);
+    } catch (Exception e) {
+        return ResponseEntity.badRequest()
+            .body(Map.of("error", e.getMessage()));
+    }
+}
+\end{lstlisting}
+
+\begin{infobox}{Logique d'import intelligente}
+\begin{itemize}
+  \item Si un formateur (identifi\'{e} par email) n'existe pas, il est cr\'{e}\'{e} automatiquement
+  \item Si un participant (identifi\'{e} par email) n'existe pas, il est cr\'{e}\'{e} automatiquement
+  \item Les domaines, structures et profils sont cr\'{e}\'{e}s \`{a} la vol\'{e}e si n\'{e}cessaire
+  \item Le r\'{e}sultat indique le nombre d'enregistrements import\'{e}s et les erreurs \'{e}ventuelles
+\end{itemize}
+\end{infobox}
+
+\section{Suppression en Lot (Bulk Delete)}
+
+\begin{lstlisting}[language=Java, caption={ParticipantController.java --- Suppression en lot}]
+@DeleteMapping("/bulk")
+public ResponseEntity<?> bulkDelete(@RequestBody List<Long> ids) {
+    service.deleteAllByIds(ids);
+    return ResponseEntity.ok(
+        Map.of("deleted", ids.size()));
+}
+\end{lstlisting}
+
+C\^{o}t\'{e} frontend, des checkboxes permettent la multi-s\'{e}lection avec un bouton ``Supprimer la s\'{e}lection'' qui appara\^{\i}t d\`{e}s qu'au moins un \'{e}l\'{e}ment est coch\'{e}. Une bo\^{\i}te de dialogue de confirmation prot\`{e}ge contre les suppressions accidentelles.
 \section{Service Angular avec RxJS}
 
 \begin{lstlisting}[language=Java, caption={formation.service.ts --- Communication avec l'API}]
@@ -951,17 +1012,39 @@ export class FormationService {
     return this.http.get(`${this.api}/export/excel`, { responseType: 'blob' });
   }
 
-  // Statistiques pour les graphiques
-  getStatsByDomaine(): Observable<{[k:string]:number}> {
-    return this.http.get<any>(`${this.api}/stats/domaine`);
+  // Import Excel (FormData avec fichier .xlsx)
+  importExcel(file: File): Observable<any> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post(`${this.api}/import`, fd);
+  }
+
+  // Statistiques pour les graphiques du dashboard
+  getStatsByDomaine(annee?: number): Observable<{[k:string]:number}> {
+    const p = annee ? `?annee=${annee}` : '';
+    return this.http.get<any>(`${this.api}/stats/domaine${p}`);
   }
 }
+\end{lstlisting}
 
-// Utilisation dans le composant :
-this.service.getAll().subscribe((data: Formation[]) => {
-  this.items = data;
-  this.applyFilters(); // Filtrage local
-});
+\begin{lstlisting}[language=Java, caption={participant.service.ts --- Import et suppression en lot}]
+@Injectable({ providedIn: 'root' })
+export class ParticipantService {
+  private api = 'http://localhost:8080/api/participants';
+
+  // Import Excel de participants
+  importExcel(file: File): Observable<any> {
+    const fd = new FormData();
+    fd.append('file', file);
+    return this.http.post(`${this.api}/import`, fd);
+  }
+
+  // Suppression en lot (array d'IDs)
+  bulkDelete(ids: number[]): Observable<void> {
+    return this.http.request<void>('DELETE',
+      `${this.api}/bulk`, { body: ids });
+  }
+}
 \end{lstlisting}
 
 \clearpage
@@ -1102,14 +1185,36 @@ Acc\`{e}s refus\'{e} & \texttt{/access-denied} & Authentifi\'{e} --- Page 403 \\
 
 Le \texttt{ThemeService} g\`{e}re la bascule dark/light mode persist\'{e}e en \texttt{localStorage}. Les variables CSS sont red\'{e}finies pour chaque th\`{e}me, permettant une transition fluide sans rechargement de page.
 
-\subsection{Tableau de Bord Statistique}
+\subsection{Tableau de Bord Statistique Avanc\'{e}}
 
-Le dashboard (ADMIN + RESPONSABLE) affiche trois graphiques via \textbf{ng2-charts} (wrapper Angular de Chart.js) :
+Le dashboard (ADMIN + RESPONSABLE) est organis\'{e} en \textbf{trois onglets} via \textbf{ng2-charts} (wrapper Angular de Chart.js) :
+
+\subsubsection{Onglet Vue d'ensemble}
 \begin{itemize}
-  \item \textbf{Graphique en barres :} Nombre de formations par domaine
-  \item \textbf{Graphique en ligne :} \'{E}volution du nombre de formations par ann\'{e}e
-  \item \textbf{Graphique doughnut :} Budget total par domaine (en DT)
+  \item \textbf{Barre de statistiques :} 4 cartes (Formations, Budget total, Formateurs, Jours formation)
+  \item \textbf{Filtrage par ann\'{e}e :} Chips cliquables pour filtrer toutes les donn\'{e}es par ann\'{e}e
+  \item \textbf{Graphique camembert :} R\'{e}partition des formations par domaine avec l\'{e}gende et pourcentages
+  \item \textbf{Top 5 formations :} Les formations les plus suivies (par nombre de participants)
+  \item \textbf{Top 5 participants actifs :} Les participants inscrits au plus grand nombre de formations
+  \item \textbf{Formations par formateur :} Classement des formateurs par nombre de formations
+  \item \textbf{\'{E}volution par ann\'{e}e :} Courbe smooth avec zone remplie --- clic pour zoomer sur le d\'{e}tail par date
 \end{itemize}
+
+\subsubsection{Onglet Gouvernance \& Budget}
+\begin{itemize}
+  \item \textbf{\'{E}volution du budget :} Courbe jaune avec zone remplie et zoom par formation
+  \item \textbf{Budget par domaine :} Barres color\'{e}es par domaine
+\end{itemize}
+
+\subsubsection{Onglet Participants \& Formateurs}
+\begin{itemize}
+  \item \textbf{Nombre de participants :} Courbe verte avec zone remplie et zoom par formation
+  \item \textbf{Formations par formateur :} Barres horizontales tri\'{e}es
+\end{itemize}
+
+\begin{notebox}{Zoom interactif}
+Chaque courbe d'\'{e}volution (formations, budget, participants) supporte le \textbf{clic pour zoomer} : un clic sur un point de donn\'{e}es ouvre un panneau d\'{e}taill\'{e} montrant la r\'{e}partition par formation pour l'ann\'{e}e s\'{e}lectionn\'{e}e. Un bouton retour permet de revenir \`{a} la vue globale.
+\end{notebox}
 
 \subsection{Panel Formations par Participant}
 
@@ -1143,6 +1248,20 @@ Mot de passe faible & \textcolor{green!50!black}{\checkmark\ OK} & Barre rouge +
 \hline
 Export Excel & \textcolor{green!50!black}{\checkmark\ OK} & Fichier .xlsx t\'{e}l\'{e}charg\'{e} avec mise en forme \\
 \hline
+Import Excel formations & \textcolor{green!50!black}{\checkmark\ OK} & Formations cr\'{e}\'{e}es, formateurs/participants ajout\'{e}s si inexistants \\
+\hline
+Import Excel participants & \textcolor{green!50!black}{\checkmark\ OK} & Participants import\'{e}s avec structure et profil \\
+\hline
+Import Excel formateurs & \textcolor{green!50!black}{\checkmark\ OK} & Formateurs import\'{e}s avec type et employeur \\
+\hline
+Suppression en lot & \textcolor{green!50!black}{\checkmark\ OK} & Multi-s\'{e}lection, confirmation, puis suppression group\'{e}e \\
+\hline
+Dashboard filtrage ann\'{e}e & \textcolor{green!50!black}{\checkmark\ OK} & Toutes les donn\'{e}es et pourcentages recalcul\'{e}s dynamiquement \\
+\hline
+Dashboard zoom courbe & \textcolor{green!50!black}{\checkmark\ OK} & Clic sur un point ouvre le d\'{e}tail par formation \\
+\hline
+Recherche temps r\'{e}el & \textcolor{green!50!black}{\checkmark\ OK} & Filtrage instantan\'{e} sur tous les champs \\
+\hline
 RESPONSABLE modifie formation & \textcolor{green!50!black}{\checkmark\ OK} & Autoris\'{e} (RESPONSABLE + ADMIN) \\
 \hline
 UTILISATEUR modifie formation & \textcolor{green!50!black}{\checkmark\ OK} & Ses propres formations uniquement \\
@@ -1174,7 +1293,21 @@ POST & \texttt{/api/formations} & 200 / 400 & Formation cr\'{e}\'{e}e ou erreur 
 \hline
 GET & \texttt{/api/formations/export/excel} & 200 & Fichier .xlsx \\
 \hline
-GET & \texttt{/api/formations/stats/domaine} & 200 & Map<String, Long> \\
+POST & \texttt{/api/formations/import} & 200 / 400 & Import en masse via fichier .xlsx \\
+\hline
+GET & \texttt{/api/formations/stats/domaine} & 200 & Map\textless String, Long\textgreater{} \\
+\hline
+GET & \texttt{/api/formations/stats/annee} & 200 & Map\textless Integer, Long\textgreater{} \\
+\hline
+GET & \texttt{/api/formations/stats/budget} & 200 & Map\textless Integer, Double\textgreater{} \\
+\hline
+POST & \texttt{/api/participants/import} & 200 / 400 & Import participants via .xlsx \\
+\hline
+DELETE & \texttt{/api/participants/bulk} & 200 & Suppression en lot par IDs \\
+\hline
+POST & \texttt{/api/formateurs/import} & 200 / 400 & Import formateurs via .xlsx \\
+\hline
+DELETE & \texttt{/api/formateurs/bulk} & 200 & Suppression en lot par IDs \\
 \hline
 \end{tabularx}
 \end{table}
@@ -1314,23 +1447,25 @@ L'email est envoy\'{e} via \textbf{Gmail SMTP} (JavaMail + Spring Boot Starter M
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{img_dashboard1.png}
-\caption{Dashboard Admin --- Banni\`{e}re de bienvenue et 4 cartes de statistiques}
+\caption{Dashboard Admin --- Onglet Vue d'ensemble : 4 cartes de statistiques, filtrage par ann\'{e}e, camembert par domaine, top 5 formations, participants les plus actifs et formateurs}
 \label{fig:dash1}
 \end{figure}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{img_dashboard2.png}
-\caption{Dashboard Admin --- Graphiques : barres (domaines), ligne (ann\'{e}es), doughnut (budget) et r\'{e}sum\'{e}}
+\caption{Dashboard Admin --- Onglet Gouvernance \& Budget : courbe d'\'{e}volution du budget avec zoom interactif et barres par domaine}
 \label{fig:dash2}
 \end{figure}
 
-\begin{infobox}{Graphiques du tableau de bord}
+\begin{infobox}{Fonctionnalit\'{e}s du tableau de bord avanc\'{e}}
 \begin{itemize}
-  \item \textbf{Formations par Domaine :} Graphique en barres color\'{e}es (Informatique, Management, Juridique, RH...)
-  \item \textbf{\'{E}volution par Ann\'{e}e :} Graphique en ligne avec remplissage (ng2-charts / Chart.js)
-  \item \textbf{Budget par Domaine :} Graphique doughnut avec l\'{e}gende
-  \item \textbf{R\'{e}sum\'{e} :} Tableau r\'{e}capitulatif (formations, participants, formateurs, budget total, jours, domaines)
+  \item \textbf{3 onglets :} Vue d'ensemble, Gouvernance \& Budget, Participants \& Formateurs
+  \item \textbf{Filtrage par ann\'{e}e :} Chips cliquables recalculant tous les pourcentages et classements dynamiquement
+  \item \textbf{Zoom interactif :} Clic sur un point de courbe pour afficher le d\'{e}tail par formation
+  \item \textbf{Top 5 participants actifs :} Classement par nombre de formations suivies
+  \item \textbf{Top 5 formateurs :} Classement par nombre de formations dispens\'{e}es
+  \item \textbf{Courbes avec remplissage :} Budget (jaune), participants (vert), formations (bleu)
 \end{itemize}
 \end{infobox}
 
@@ -1389,25 +1524,30 @@ Le Responsable voit le m\^{e}me dashboard que l'Admin (statistiques, graphiques)
 
 \section{Bilan du Projet}
 
-Ce projet a permis de r\'{e}aliser une application web compl\`{e}te r\'{e}pondant \`{a} toutes les exigences du cahier des charges \cite{cdc2026}. Les principaux acquis sont :
+Ce projet a permis de r\'{e}aliser une application web compl\`{e}te r\'{e}pondant \`{a} toutes les exigences du cahier des charges \cite{cdc2026}, avec plusieurs fonctionnalit\'{e}s suppl\'{e}mentaires allant au-del\`{a} des sp\'{e}cifications initiales. Les principaux acquis sont :
 
 \begin{itemize}
   \item Ma\^{\i}trise de l'architecture \textbf{Spring Boot} : entit\'{e}s JPA, repositories, services, controllers REST
   \item Impl\'{e}mentation d'une \textbf{s\'{e}curit\'{e} JWT} robuste avec gestion des r\^{o}les (RBAC)
   \item D\'{e}veloppement d'une \textbf{SPA Angular} avec navigation prot\'{e}g\'{e}e par guards
   \item Mise en place de \textbf{contr\^{o}les de saisie} \`{a} deux niveaux (frontend + backend)
-  \item Int\'{e}gration de fonctionnalit\'{e}s avanc\'{e}es : \textbf{export Excel}, \textbf{v\'{e}rification email}, \textbf{reCAPTCHA}
+  \item \textbf{Import/Export Excel} : import en masse de formations, participants et formateurs avec cr\'{e}ation automatique des entit\'{e}s li\'{e}es ; export format\'{e} via Apache POI
+  \item \textbf{Suppression en lot} : multi-s\'{e}lection avec checkboxes pour suppression group\'{e}e de participants et formateurs
+  \item \textbf{Dashboard avanc\'{e}} : 3 onglets (Vue d'ensemble, Gouvernance \& Budget, Participants \& Formateurs) avec filtrage par ann\'{e}e, zoom interactif sur les courbes, top 5 participants les plus actifs et top formateurs
+  \item \textbf{Recherche en temps r\'{e}el} : filtrage instantan\'{e} sur tous les champs dans les pages formations, participants et formateurs
   \item Design moderne avec \textbf{dark/light mode} et animations CSS
+  \item Int\'{e}gration de \textbf{reCAPTCHA v2} et \textbf{v\'{e}rification email} via Gmail SMTP
 \end{itemize}
 
 \section{Perspectives d'Am\'{e}lioration}
 
 \begin{itemize}
-  \item G\'{e}n\'{e}ration de rapports PDF (JasperReports ou iText)
-  \item Notifications en temps r\'{e}el (WebSocket)
+  \item G\'{e}n\'{e}ration de rapports PDF automatiques (JasperReports ou iText)
+  \item Notifications en temps r\'{e}el lors d'ajout de formations (WebSocket)
   \item Application mobile compl\'{e}mentaire (React Native ou Ionic)
-  \item D\'{e}ploiement sur cloud (Docker + AWS/Azure)
-  \item Tests unitaires et d'int\'{e}gration (JUnit + Karma/Jasmine)
+  \item D\'{e}ploiement sur cloud (Docker + AWS/Azure) avec pipeline CI/CD
+  \item Tests unitaires et d'int\'{e}gration automatis\'{e}s (JUnit + Karma/Jasmine)
+  \item Gestion des \'{e}valuations post-formation et certification
 \end{itemize}
 
 \vspace{1cm}
