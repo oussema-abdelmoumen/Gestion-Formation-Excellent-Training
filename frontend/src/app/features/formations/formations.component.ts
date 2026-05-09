@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { FormationService } from '../../core/services/formation.service';
 import { DomaineService } from '../../core/services/domaine.service';
 import { FormateurService } from '../../core/services/formateur.service';
@@ -8,7 +9,18 @@ import { ParticipantService } from '../../core/services/participant.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Formation, Domaine, Formateur, Participant } from '../../shared/models';
 
-@Component({ selector:'app-formations', templateUrl:'./formations.component.html', styleUrls:['./formations.component.css'] })
+@Component({
+  selector:'app-formations',
+  templateUrl:'./formations.component.html',
+  styleUrls:['./formations.component.css'],
+  animations: [
+    trigger('detailExpand', [
+      state('collapsed, void', style({ height: '0px', minHeight: '0', overflow: 'hidden' })),
+      state('expanded', style({ height: '*', overflow: 'visible' })),
+      transition('expanded <=> collapsed', animate('250ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+    ]),
+  ],
+})
 export class FormationsComponent implements OnInit {
   items: Formation[] = [];
   filtered: Formation[] = [];

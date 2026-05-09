@@ -1,15 +1,29 @@
 import { Component, OnInit } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { FormateurService } from '../../core/services/formateur.service';
 import { EmployeurService } from '../../core/services/employeur.service';
+import { FormationService } from '../../core/services/formation.service';
 import { AuthService } from '../../core/services/auth.service';
-import { Formateur, Employeur } from '../../shared/models';
+import { Formateur, Employeur, Formation } from '../../shared/models';
 
-@Component({ selector:'app-formateurs', templateUrl:'./formateurs.component.html', styleUrls:['./formateurs.component.css'] })
+@Component({
+  selector:'app-formateurs',
+  templateUrl:'./formateurs.component.html',
+  styleUrls:['./formateurs.component.css'],
+  animations: [
+    trigger('detailExpand', [
+      state('collapsed, void', style({ height: '0px', minHeight: '0', overflow: 'hidden' })),
+      state('expanded', style({ height: '*', overflow: 'visible' })),
+      transition('expanded <=> collapsed', animate('250ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+    ]),
+  ],
+})
 export class FormateursComponent implements OnInit {
   items: Formateur[] = [];
   filtered: Formateur[] = [];
   employeurs: Employeur[] = [];
+  allFormations: Formation[] = [];
   showForm = false; editing = false;
   current: Formateur = this.empty();
   formErrors: any = {};
@@ -20,14 +34,19 @@ export class FormateursComponent implements OnInit {
   // Multi-select
   selectedIds = new Set<number>();
 
+  // Expandable formations
+  expandedId: number | null = null;
+  formateurFormations: { [id: number]: Formation[] } = {};
+
   get displayedColumns() {
-    const base = ['select','id','nom','prenom','email','tel','type','employeur'];
+    const base = ['select','id','nom','prenom','email','tel','type','employeur','formations'];
     return this.isReadOnly ? base.filter(c => c !== 'select') : [...base, 'actions'];
   }
 
   constructor(
     private svc: FormateurService,
     private empSvc: EmployeurService,
+    private fmtSvc: FormationService,
     private snack: MatSnackBar,
     public auth: AuthService
   ) {}
@@ -37,6 +56,10 @@ export class FormateursComponent implements OnInit {
     this.isReadOnly = this.auth.isResponsable();
     this.load();
     this.empSvc.getAll().subscribe(e => this.employeurs = e);
+    this.fmtSvc.getAll().subscribe(f => {
+      this.allFormations = f;
+      this.buildFormateurFormations();
+    });
   }
 
   empty(): Formateur { return { nom:'', prenom:'', email:'', tel:'', type:'INTERNE' }; }
@@ -44,9 +67,27 @@ export class FormateursComponent implements OnInit {
   load() {
     this.svc.getAll().subscribe(d => {
       this.items = d;
+      this.buildFormateurFormations();
       this.applyFilters();
     });
   }
+
+  buildFormateurFormations() {
+    this.formateurFormations = {};
+    this.items.forEach(f => {
+      if (f.id) {
+        this.formateurFormations[f.id] = this.allFormations.filter(
+          fm => fm.formateur?.id === f.id
+        );
+      }
+    });
+  }
+
+  getFormationsForFormateur(formateurId: number): Formation[] {
+    return this.formateurFormations[formateurId] || [];
+  }
+
+  toggleDetail(id: number) { this.expandedId = this.expandedId === id ? null : id; }
 
   applyFilters() {
     if (!this.searchText.trim()) {

@@ -121,3 +121,19 @@
   animation:pulse-red 2s infinite;
 }
 .btn-delete-bulk:hover{background:rgba(255,68,68,.25)!important;}
+
+/* Inline detail row */
+tr.detail-row { height: 0; }
+tr.detail-row td { padding: 0 !important; border-bottom: none !important; }
+
+.detail-expand { overflow: hidden; }
+.detail-expand-inner {
+  padding: 16px 20px 20px;
+  background: rgba(0, 20, 50, 0.6);
+  border-left: 3px solid #00e676;
+  margin: 4px 0;
+  border-radius: 0 12px 12px 0;
+}
+
+tr.expanded-row { background: rgba(0, 230, 118, 0.04) !important; }
+tr.expanded-row td { border-bottom-color: transparent !important; }

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 import { ParticipantService } from '../../core/services/participant.service';
 import { StructureService } from '../../core/services/structure.service';
 import { ProfilService } from '../../core/services/profil.service';
@@ -8,7 +9,18 @@ import { FormationService } from '../../core/services/formation.service';
 import { AuthService } from '../../core/services/auth.service';
 import { Participant, Structure, Profil, Formation } from '../../shared/models';
 
-@Component({ selector:'app-participants', templateUrl:'./participants.component.html', styleUrls:['./participants.component.css'] })
+@Component({
+  selector:'app-participants',
+  templateUrl:'./participants.component.html',
+  styleUrls:['./participants.component.css'],
+  animations: [
+    trigger('detailExpand', [
+      state('collapsed, void', style({ height: '0px', minHeight: '0', overflow: 'hidden' })),
+      state('expanded', style({ height: '*', overflow: 'visible' })),
+      transition('expanded <=> collapsed', animate('250ms cubic-bezier(0.4, 0.0, 0.2, 1)')),
+    ]),
+  ],
+})
 export class ParticipantsComponent implements OnInit {
   items: Participant[] = [];
   filtered: Participant[] = [];

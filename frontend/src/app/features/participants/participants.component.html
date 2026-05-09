@@ -111,7 +111,7 @@
   <!-- TABLE -->
   <mat-card>
     <mat-card-content style="padding:0;overflow-x:auto">
-      <table mat-table [dataSource]="filtered">
+      <table mat-table [dataSource]="filtered" multiTemplateDataRows>
 
         <ng-container matColumnDef="select">
           <th mat-header-cell *matHeaderCellDef style="width:42px">
@@ -179,41 +179,47 @@
           </td>
         </ng-container>
 
-        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let r; columns: displayedColumns;" class="main-row"></tr>
-      </table>
-
-      <!-- EXPANDED FORMATIONS PANEL -->
-      <ng-container *ngFor="let p of filtered">
-        <div *ngIf="expandedId === p.id" class="formations-panel">
-          <div class="formations-panel-header">
-            <mat-icon>school</mat-icon>
-            Formations de <strong>{{ p.prenom }} {{ p.nom }}</strong>
-            <span class="fp-count">{{ getFormationsForParticipant(p.id!).length }} formation(s)</span>
-          </div>
-          <div *ngIf="getFormationsForParticipant(p.id!).length === 0" class="fp-empty">
-            <mat-icon>sentiment_dissatisfied</mat-icon>
-            Aucune formation associée à ce participant
-          </div>
-          <div class="fp-grid" *ngIf="getFormationsForParticipant(p.id!).length > 0">
-            <div *ngFor="let f of getFormationsForParticipant(p.id!)" class="fp-card">
-              <div class="fp-card-header">
-                <mat-icon>menu_book</mat-icon>
-                <span class="fp-titre">{{ f.titre }}</span>
-                <span class="badge-year">{{ f.annee }}</span>
-              </div>
-              <div class="fp-card-body">
-                <div class="fp-info"><mat-icon>category</mat-icon><span>{{ f.domaine?.libelle }}</span></div>
-                <div class="fp-info" *ngIf="f.lieu"><mat-icon>place</mat-icon><span>{{ f.lieu }}</span></div>
-                <div class="fp-info" *ngIf="f.dateFormation"><mat-icon>event</mat-icon><span>{{ f.dateFormation }}</span></div>
-                <div class="fp-info"><mat-icon>schedule</mat-icon><span>{{ f.duree }} jour(s)</span></div>
-                <div class="fp-info" *ngIf="f.formateur"><mat-icon>person_pin</mat-icon><span>{{ f.formateur.prenom }} {{ f.formateur.nom }}</span></div>
+        <!-- ═══ EXPANDED FORMATIONS ROW ═══ -->
+        <ng-container matColumnDef="expandedDetail">
+          <td mat-cell *matCellDef="let r" [attr.colspan]="displayedColumns.length">
+            <div class="detail-expand" [@detailExpand]="expandedId === r.id ? 'expanded' : 'collapsed'">
+              <div class="detail-expand-inner" *ngIf="expandedId === r.id">
+                <div class="formations-panel-header">
+                  <mat-icon>school</mat-icon>
+                  Formations de <strong>{{ r.prenom }} {{ r.nom }}</strong>
+                  <span class="fp-count">{{ getFormationsForParticipant(r.id!).length }} formation(s)</span>
+                </div>
+                <div *ngIf="getFormationsForParticipant(r.id!).length === 0" class="fp-empty">
+                  <mat-icon>sentiment_dissatisfied</mat-icon>
+                  Aucune formation associée à ce participant
+                </div>
+                <div class="fp-grid" *ngIf="getFormationsForParticipant(r.id!).length > 0">
+                  <div *ngFor="let f of getFormationsForParticipant(r.id!)" class="fp-card">
+                    <div class="fp-card-header">
+                      <mat-icon>menu_book</mat-icon>
+                      <span class="fp-titre">{{ f.titre }}</span>
+                      <span class="badge-year">{{ f.annee }}</span>
+                    </div>
+                    <div class="fp-card-body">
+                      <div class="fp-info"><mat-icon>category</mat-icon><span>{{ f.domaine?.libelle }}</span></div>
+                      <div class="fp-info" *ngIf="f.lieu"><mat-icon>place</mat-icon><span>{{ f.lieu }}</span></div>
+                      <div class="fp-info" *ngIf="f.dateFormation"><mat-icon>event</mat-icon><span>{{ f.dateFormation }}</span></div>
+                      <div class="fp-info"><mat-icon>schedule</mat-icon><span>{{ f.duree }} jour(s)</span></div>
+                      <div class="fp-info" *ngIf="f.formateur"><mat-icon>person_pin</mat-icon><span>{{ f.formateur.prenom }} {{ f.formateur.nom }}</span></div>
+                    </div>
+                  </div>
+                </div>
+                <button class="close-panel" (click)="expandedId = null"><mat-icon>close</mat-icon> Fermer</button>
               </div>
             </div>
-          </div>
-          <button class="close-panel" (click)="expandedId = null"><mat-icon>close</mat-icon> Fermer</button>
-        </div>
-      </ng-container>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let r; columns: displayedColumns;" class="main-row"
+            [class.expanded-row]="expandedId === r.id"></tr>
+        <tr mat-row *matRowDef="let r; columns: ['expandedDetail']" class="detail-row"></tr>
+      </table>
 
       <div *ngIf="filtered.length===0" class="empty-state">
         <mat-icon>group_off</mat-icon>
@@ -222,3 +228,4 @@
     </mat-card-content>
   </mat-card>
 </div>
+

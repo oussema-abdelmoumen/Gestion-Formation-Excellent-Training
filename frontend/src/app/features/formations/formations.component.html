@@ -252,60 +252,10 @@
     </mat-card-actions>
   </mat-card>
 
-  <!-- DETAIL -->
-  <mat-card *ngIf="showDetail && selectedFormation" class="detail-card">
-    <mat-card-title>📋 {{ selectedFormation.titre }}</mat-card-title>
-    <mat-card-content style="padding-top:16px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <p><strong>Année :</strong> {{ selectedFormation.annee }}</p>
-        <p><strong>Durée :</strong> {{ selectedFormation.duree }} jour(s)</p>
-        <p><strong>Budget :</strong> {{ selectedFormation.budget || 0 | number }} DT</p>
-        <p><strong>Domaine :</strong> {{ selectedFormation.domaine?.libelle ?? "" }}</p>
-        <p><strong>Lieu :</strong> {{ selectedFormation.lieu || 'N/A' }}</p>
-        <p><strong>Date :</strong> {{ selectedFormation.dateFormation || 'N/A' }}</p>
-        <p style="grid-column:1/-1"><strong>Formateur :</strong>
-          {{ selectedFormation.formateur ? selectedFormation.formateur.prenom+' '+selectedFormation.formateur.nom : 'Non assigné' }}
-        </p>
-        <p *ngIf="!auth.isUtilisateur()" style="grid-column:1/-1">
-          <strong>Déposé par :</strong>
-          <span style="color:var(--accent-cyan);font-weight:600;margin-left:6px">
-            {{ selectedFormation.createdByLogin || ('User #' + selectedFormation.createdById) || '—' }}
-          </span>
-        </p>
-      </div>
-      <p style="margin-top:12px">
-        <strong>Participants ({{ selectedFormation.participants?.length || 0 }}) :</strong>
-        <span *ngIf="(selectedFormation.participants?.length || 0) < 4" class="warning-text">
-          ⚠️ Moins de 4 participants
-        </span>
-        <span *ngIf="!auth.isUtilisateur()" style="font-size:.78rem;color:var(--text-muted);margin-left:8px">
-          Cliquer sur un participant pour voir ses infos
-        </span>
-      </p>
-      <div class="chip-list" style="margin-top:8px">
-        <mat-chip
-          *ngFor="let p of selectedFormation.participants"
-          (click)="goToParticipant(p)"
-          style="cursor:pointer"
-          matTooltip="Voir les informations de {{ p.prenom }} {{ p.nom }}">
-          {{ p.prenom }} {{ p.nom }}
-        </mat-chip>
-        <span *ngIf="!selectedFormation.participants?.length" style="color:#556677;font-style:italic">Aucun participant</span>
-      </div>
-    </mat-card-content>
-    <mat-card-actions style="padding:12px 16px">
-      <button mat-button (click)="cancel()"><mat-icon>close</mat-icon> Fermer</button>
-      <button mat-raised-button color="primary" (click)="openForm(selectedFormation)"
-              *ngIf="canCRUD && !auth.isResponsable()" style="margin-left:8px">
-        <mat-icon>edit</mat-icon> Modifier
-      </button>
-    </mat-card-actions>
-  </mat-card>
-
   <!-- TABLE -->
   <mat-card>
     <mat-card-content style="padding:0;overflow-x:auto">
-      <table mat-table [dataSource]="filtered">
+      <table mat-table [dataSource]="filtered" multiTemplateDataRows>
         <ng-container matColumnDef="id">
           <th mat-header-cell *matHeaderCellDef>#</th>
           <td mat-cell *matCellDef="let r" style="color:#556677">{{r.id}}</td>
@@ -380,8 +330,64 @@
             <button mat-icon-button (click)="viewDetail(r)" matTooltip="Voir détail"><mat-icon>visibility</mat-icon></button>
           </td>
         </ng-container>
+
+        <!-- ═══ EXPANDED DETAIL ROW ═══ -->
+        <ng-container matColumnDef="expandedDetail">
+          <td mat-cell *matCellDef="let r" [attr.colspan]="displayedColumns.length">
+            <div class="detail-expand" [@detailExpand]="r === selectedFormation && showDetail ? 'expanded' : 'collapsed'">
+              <div class="detail-expand-inner" *ngIf="r === selectedFormation && showDetail">
+                <div class="detail-grid">
+                  <p><strong>Année :</strong> {{ r.annee }}</p>
+                  <p><strong>Durée :</strong> {{ r.duree }} jour(s)</p>
+                  <p><strong>Budget :</strong> {{ r.budget || 0 | number }} DT</p>
+                  <p><strong>Domaine :</strong> {{ r.domaine?.libelle ?? "" }}</p>
+                  <p><strong>Lieu :</strong> {{ r.lieu || 'N/A' }}</p>
+                  <p><strong>Date :</strong> {{ r.dateFormation || 'N/A' }}</p>
+                  <p style="grid-column:1/-1"><strong>Formateur :</strong>
+                    {{ r.formateur ? r.formateur.prenom+' '+r.formateur.nom : 'Non assigné' }}
+                  </p>
+                  <p *ngIf="!auth.isUtilisateur()" style="grid-column:1/-1">
+                    <strong>Déposé par :</strong>
+                    <span style="color:var(--accent-cyan);font-weight:600;margin-left:6px">
+                      {{ r.createdByLogin || ('User #' + r.createdById) || '—' }}
+                    </span>
+                  </p>
+                </div>
+                <p style="margin-top:12px">
+                  <strong>Participants ({{ r.participants?.length || 0 }}) :</strong>
+                  <span *ngIf="(r.participants?.length || 0) < 4" class="warning-text">
+                    ⚠️ Moins de 4 participants
+                  </span>
+                  <span *ngIf="!auth.isUtilisateur()" style="font-size:.78rem;color:var(--text-muted);margin-left:8px">
+                    Cliquer sur un participant pour voir ses infos
+                  </span>
+                </p>
+                <div class="chip-list" style="margin-top:8px">
+                  <mat-chip
+                    *ngFor="let p of r.participants"
+                    (click)="goToParticipant(p)"
+                    style="cursor:pointer"
+                    matTooltip="Voir les informations de {{ p.prenom }} {{ p.nom }}">
+                    {{ p.prenom }} {{ p.nom }}
+                  </mat-chip>
+                  <span *ngIf="!r.participants?.length" style="color:#556677;font-style:italic">Aucun participant</span>
+                </div>
+                <div style="margin-top:12px;display:flex;gap:8px">
+                  <button mat-button (click)="cancel()"><mat-icon>close</mat-icon> Fermer</button>
+                  <button mat-raised-button color="primary" (click)="openForm(r)"
+                          *ngIf="canCRUD && !auth.isResponsable()">
+                    <mat-icon>edit</mat-icon> Modifier
+                  </button>
+                </div>
+              </div>
+            </div>
+          </td>
+        </ng-container>
+
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-        <tr mat-row *matRowDef="let r; columns: displayedColumns;"></tr>
+        <tr mat-row *matRowDef="let r; columns: displayedColumns;"
+            [class.expanded-row]="r === selectedFormation && showDetail"></tr>
+        <tr mat-row *matRowDef="let r; columns: ['expandedDetail']" class="detail-row"></tr>
       </table>
       <div *ngIf="filtered.length===0" class="empty-state">
         <mat-icon>search_off</mat-icon>
